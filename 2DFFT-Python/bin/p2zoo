@@ -1,0 +1,828 @@
+#!/usr/bin/env python3
+
+##
+## P2ZOO - Create FITS image files from the galaxy arm zooniverse data files
+##
+## This utility will take the CSV trace data output files from the SpiralGraph
+##   galaxy arm mapping project.  These files contain data points which have
+##   been marked as lying on the arms of the galaxies.  The program will
+##   read each line the input file and collect all the arm tracing data.  It
+##   will then generate one FITS output file for each subject id in the data
+##   file. All the arms traces wll be cumulatively added into the image and
+##   a median arm number calcualted for the file and put in a header keyword.
+##   The program will also use the mapped points to crop the image and make
+##   an attempt to calculate a bar/core size number (which is also placed in
+##   a header keyword).
+##
+## The nature of the input file requires the use of regular expressions to
+##   parse the data.  Also, the program needs to account for the fact that
+##   there may be multiple arm tracings using the same arm number.  This 
+##   makes the input code a bit complex, so there are a lot of comments in
+##   that section of the code.
+##
+##
+## Version 3.3  02-Jun-2019
+##
+##
+## Authors:  Ian Hewitt & Dr. Patrick Treuthardt,
+##           NC Museum of Natural Sciences,
+##           Astronomy & Astrophysics Lab,
+##           Raleigh, NC USA.
+##           http://github.com/treuthardt/P2DFFT
+##
+##
+## LICENSE
+##
+## P2DFFT Spiral Galaxy Arm Pitch Angle Analysis Suite
+## Copyright (c) 2016-2019  Ian B. Hewitt & Dr. Patrick Treuthardt
+##
+## The program is free software:  you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by the Free
+## Software Foundation, version 3.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+## details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program.  If not, see < https://www.gnu.org/licenses >.
+##
+## The authors can be contacted at:
+##
+##      North Carolina Museum of Natural Sciences
+##      Astronomy & Astrophysics Laboratory
+##      11 West Jones Street
+##      Raleigh, NC, 27601  USA
+##      +1.919.707.9800
+##
+##      -- or --
+##
+##      patrick.treuthardt@naturalsciences.org
+##
+## Usage: p2zoo [-s|--sub] [-v|--verbose] [-c|--core] [-f|--feather <n>]
+##              [-n|--name] <files>
+##
+##   -s|--sub        (Optional) Also saver each tracing as a SUB_<>/fits image
+##   -v|--verbose    (Optional) Print detailed status messages
+##   -c|--core       (Optional) Core will be filled in output images
+##   -f|--feather    (Optional) Padding value used for arms (1-n)
+##   -n|--name       (Optional) Use filename entry for output file instead
+##                              of the subject id
+##
+##
+##  Revision History:
+##         V3.3 - 02-Jun-2019 - Fix bug where ARMS keyword was properly rounded
+##                              based on the median value, but left in floating
+##                              point format instead of integer
+##                            - Fix bug in trimming code
+##                            - Change default feathering value to 1 to get
+##                              better results
+##         V3.2 - 17-May-2019 - Fix bug where read dimensions were reversed and
+##                              would cause an issue with non-square image
+##                              measurements
+##                            - Change orientation of sub images to match that
+##                              of the output images
+##                            - Correct bug where max/min X/Y were not
+##                              calculated correctly for images with more than
+##                              one tracing
+##                            - Fix bug in lowery bounds checking
+##                            - Update numpy masked median checking to
+##                              account for functional changes in the latest
+##                              libraries
+##                            - Change alrgorithm to read data file through
+##                              before mapping points to get sizes of images.
+##                              This allows the use of the first occurrence
+##                              of a mapping even if the size parameters are
+##                              not there.
+##                            - Fix bug in squaring the output image to use
+##                              largest dimension, not the smallest.  This
+##                              could result in cropped images.  This also
+##                              means the smaller dimension needs an offset
+##                              added to the center/point mapping.
+##                            - Fix bug in size checking
+##         V3.1 - 09-Mar-2019 - Fix bug where feathering could not be disabled
+##                            - Add -n option back in to check for filename
+##                              entry
+##                            - Remove unecessary regex library commands
+##                            - Fix instances where error counter not
+##                              incremented upon encountering a problem
+##                            - Fix major problem with mapping of multiple
+##                              tracings to a single image
+##                            - Fix bug with -c option
+##                            - The padding (trimming) code was removed
+##                              for v3.0.  Add this code back into the program.
+##                            - Fix bug in subject ID keyword value
+##                            - Add checking of arguments
+##                            - Fix broken -f option code
+##                            - Add -s option
+##                            - Change the way the final arm number is
+##                              determined from a pure average to a maksed
+##                              median
+##         V3.0 - 16-Feb-2019 - Change algorithm to map multiple tracings to
+##                              a single FITS file
+##                            - Change ARMS and BAR header values to be integer
+##                            - Changes to comments and minor bug fixes
+##                            - Remove -n option, always use subject id for
+##                              the FITS filename
+##         V2.3 - 24-Oct-2018 - Change to remove the need to read image size, 
+##                              since the format is variable.  Now the program
+##                              will intuit the size from the points.
+##                            - Fix to be able to read old and new formats
+##                            - Make feather and core into cmd line options
+##                            - Implement missing error counter and print
+##                              line and error counters at end of processing
+##         V2.2 - 23-Oct-2018 - Fix logic for point calculation to correct bug
+##                              caused by rounding errors which could leave a 
+##                              gap in an arm
+##                            - Add FITS keyword for subject_id from the data
+##         V2.1 - 20-Oct-2018 - Update to parse fiels that don't have a 
+##                              FileName field
+##                            - Fix bug in calculating new dimensions for
+##                              output image if Y dimension is > X dimensio
+##                            - Increase number of points from 128 to 1024
+##                            - Update/add comments and place in p2dfft package
+##         V2.0 - 08-Aug-2018 - Major changes to adapt to updated spiralgraph
+##                              (zooniverse) output format
+##         V1.3 - 20-Jan-2018 - Minor changes to send to team working on 
+##                              zooniverse project
+##         V1.2 - 30-Jan-2018 - Changes for Ubuntu 16.04 Rebase
+##                            - Change format to be a program instead of main
+##                              class (ala old school)
+##                            - Update comments
+##                            - Fix bug where data line before header would not
+##                              skip to the next line
+##         V1.1 - 13-Jul-2017 - Change to add keywords BAR, ARMS, and the
+##                              version to the generated FITS image file.
+##                            - Trim image so that the arms go almost to the
+##                              edge of the image for better analysis results.
+##                            - Change default size of image to 511
+##                            - Fix bug in bar/core size calculation
+##                            - Fix bug in meesage printed in verbose mode
+##                              which caused the program to crash.
+##         V1.0 - 06-Jul-2017 - Initial version
+##
+##
+##  Requirements/Environment:
+##
+##     Python 3.x 
+##     numpy      (tested with python3-numpy)
+##     astropy.io (tested with python3-astropy)
+##
+
+##
+## SYSTEM LIBRARIES 
+##
+
+import os
+import re
+import sys
+import argparse
+
+import numpy as np
+from astropy.io import fits
+
+
+##
+## CONSTANTS 
+##
+##
+##   VERSION  = Version of the program
+##   PAD      = Controls margin from last points to edge of image (percentage).
+##              Set this to zero for no trimming.
+##   FILES    = Maximum files that can be generated
+##   NUM_PTS  = Maximum number of line points per arm entry
+##   FEATHER  = Number of pixels added to each side of arm to make it thicker
+##   NUM_ARMS = Maximum number of arm entries for a file.  A user can only
+##              map six arms, but multiple users each count against this
+##              total, so it should be > than the retirement count * the
+##              number of arms.
+##
+
+VERSION='3.3/20190602'
+PAD=0.20
+FILES=1024
+NUM_PTS=512
+FEATHER=1
+NUM_ARMS=128
+
+##
+## GLOBAL VARIABLES 
+##
+##
+##   ERR      = Total number of errors encountered
+##   GOOD     = Flag indicating if line in file is good
+##   KEYS     = Dictionary with indices for the subject id's which is keyed
+##              by the subject id
+##   SIZE     = Dictionary with tuples for reported size of subject id files.
+##              This is not the trimmed size of the output files, as that is
+##              determined by points reported in the input file.  This is
+##              also keyed by the subject id.
+##   OFFSET   = Dictionary with tuples for difference in center for reported
+##              points vs. mapping in the image.  This is needed where X and
+##              Y dimensions are not the same and one needs to be expanded
+##              in the generated image.
+##   LIMIT    = Dictionary of dictionaries that contain the minimums and 
+##              maximums of both X and Y values.  These are used for the
+##              cropping/trimming of the final images.
+##   ARM_CT   = List of the number of arms in point matrix
+##              - First index is KEY value (index) corresponding to each
+##                subject id
+##              - Second index is a list of each number of arm measurements
+##                from users
+##   ARM_IND  = Total number of arm measurements keyed by subject id
+##   POINTS   = Array for poitns for each arm, indexed first by key, next by
+##              arm number (Indexed by ARM_IND), and finally by point number 
+##
+
+err=0
+good=[True for i in range(0,FILES+1)]
+Keys=dict()
+Tag=['' for i in range(0,FILES+1)]
+Size=dict()
+Offset=dict()
+Limit=dict()
+Limit['minX']={}
+Limit['maxX']={}
+Limit['minY']={}
+Limit['maxY']={}
+Arm_Ct=np.zeros((FILES,NUM_ARMS),dtype=int)
+Arm_Ind=dict()
+Points=[[[(0,0) for i in range(0,NUM_PTS)] for j in range(0,NUM_ARMS)] for k in range(0,FILES)]
+
+##
+## SUBROUTINES
+##
+
+##
+## GET_SIZES()
+##
+## Perform the first pass through the data file to identify subject sizes
+##
+## Input: File name to read
+##
+## Return Value: None
+##
+
+##
+## MAIN PROGRAM
+##
+
+##
+## Get command line arguments using argparse.
+##
+
+options = argparse.ArgumentParser(description="This Utility Will Map The Data From The Zooniverse Spiral Graph Project")
+options.add_argument('file',help='Input data file')
+options.add_argument('-v','--verbose',help='Provide Very Detailed Results For Each File - Optional',action="store_true",default=False)
+options.add_argument('-s','--sub',help='Save FITS Images of Each Individual Measurement as Well - Optional',action="store_true",default=False)
+options.add_argument('-c','--core',help='Fill in core - Optional',action="store_true",default=False)
+options.add_argument('-f','--feather',help='Width or Arms - Optional',required=False)
+options.add_argument('-n','--name',help='Use Filename Instead of Subject ID For FITS Files - Optional',action="store_true",default=False)
+args=options.parse_args()
+
+##
+## Check command line argument values
+##
+
+if not os.path.exists(args.file):
+    print('ERROR: File ',args.file,' Not Found!')
+    sys.exit()
+
+if args.feather:
+    if  not args.feather.isdigit():
+        print('ERROR: Feather value ',args.feather,' not valid')
+        sys.exit()
+
+##
+## Read all the data from the csv and break it into fields
+##
+
+with open(args.file) as g_file:
+    g_lines = g_file.readlines()
+
+##
+## Take the first pass through the data to get the sizes of all the
+##   subjects.  This is needed because the size information is not included
+##   for each entry.  This way, if the first appearance of a subject does not
+##   have a size, later values can be used to process the first entry in the
+##   second pass
+##
+
+##
+##   KEY_INDEX  - The next key index value to be used for a new subject id
+##   LINENUM    - Current line number of input file
+##
+
+key_index=0
+line=0
+
+for gals in g_lines:
+    line+=1
+
+##
+## Ignore header row if present and check line for the correct number of fields
+##
+
+    flds=gals.split(',')
+
+    if flds[0]=='classification id':
+        good[line]=False
+        continue
+
+##
+## Get the subject id in the zooniverse data line.  Cannot proceed if no
+##   subject id.
+##
+
+    fn=flds[-1]    
+
+    if not fn:
+        print('WARNING: could not find subject id for line ',line,'...Skipping')
+        err+=1
+        good[line]=False
+        continue
+
+    name=fn.rstrip()
+    if args.verbose:
+        print('Subject ID=',fn)
+
+##
+## If the -n option is specified, try to find the filename entry. if no entry
+##   just continue with subject id.
+##
+
+    if args.name:
+        ffn=re.findall('""Filename"":""([\w.]*)""',gals)
+        if ffn:
+            name=ffn[0]
+        else:
+            print('WARNING: Could not find filename for line ',line)
+
+##
+## Save the name we are using for this line so we have a Key<-->Line Number
+##   Mapping
+##
+
+    Tag[line]=name
+
+##
+## Extract the size of the image.  Need this to understand the relative
+##   coordinates returned.
+##
+
+    szs=re.findall(r'""naturalWidth"":([\d]*),[\S]*""naturalHeight"":([\d]*)',gals)
+   
+    if not szs:
+        print('WARNING: Could not find file size value on line ',line)
+        err+=1
+        continue
+
+    for szes in szs:
+        Y=int(szes[0])
+        X=int(szes[1])
+        if args.verbose:
+            print('Found Size: ',X,',',Y)
+ 
+##
+## If the galaxy has not already been mapped, create a new dictionary entry
+##   and key number for it, enter the size, and set the initial arm index
+##   value to zero.
+##
+
+    if name not in Keys:
+        Keys[name]=key_index
+        Arm_Ind[Keys[name]]=0
+        key_index+=1
+
+    if name not in Size:
+        if X == Y:
+            Size[name]=(X,Y)
+            Offset[name]=(0,0)
+        elif X > Y:
+            Size[name]=(X,X)
+            Offset[name]=(0,int((X-Y)/2))
+        else:
+            Size[name]=(Y,Y)
+            Offset[name]=(int((Y-X)/2),0)
+
+##
+## Second pass theough data row to parse for the data points.  This code uses
+##   the Python Regular Expression library.  If you are not familiar with this,
+##   please see https://docs.python.org/2/howto/regex.html
+##
+
+line=0
+for gals in g_lines:
+
+##
+## Since we scanned the data in the first pass, no need to repeat the same 
+##   checks.
+##
+
+    line+=1
+    if not good[line]:
+        continue
+
+    if Tag[line] == '':
+        print('ERROR: Internal Error.  No Tag[line]...Exiting')
+        sys.exit()
+
+##
+## Use the regular expression capability to search for each arm entry (marked
+##   as tool/Trace in zooniverse).  The variable sections will be a list that
+##   contains the substrings with the arm number and all the X,Y point pairs.
+##
+
+    sections=re.findall(r'""tool"":[0-5],[\S]*""Trace',gals)
+
+    if not sections:
+        print('WARNING: Could not find any arms for line ',line,'...Skipping Line')
+        err+=1
+        continue
+
+##
+## Set the local variables for arm processing.
+##
+##   ARM_INDEX  - This is a list of the arm indices for each tool.  These
+##                integers will be either -1 (not mapped yet), or a value
+##                pointing to the second index value for points corresponding
+##                to that arm (mapped by another tool entry in sections).
+##                This list neds to be destroyed after each data line.
+##   ARM_COUNT  - The current number of arms in this line of the input file.
+##                Will be added as a new entry in ARM_CT at the end.
+##
+
+    arm_count=0
+    arm_index=[-1 for i in range(0,6)]
+
+    for entry,seg in enumerate(sections):
+        if args.verbose:
+            print(seg) 
+
+##
+## Need to get the tool number which tells us the arm number for this part
+##   of the tracing data and check if it exists and is valid
+##
+
+        tool_num=re.findall(r'""tool"":([\d]*)',seg)
+
+        if not tool_num:
+            print('WARNING: Could not find tool number in arm entry',entry,'on line',line,'...Skipping Thie Entry')
+            err+=1
+            continue
+
+        if int(tool_num[0]) < 0 or int(tool_num[0]) > 5:
+            print('WARNING: Invalid tool number for entry',entry,'for line ',line,' arm ',tool_num[0],'...Skipping This Entry')
+            err+=1
+            continue
+
+##
+## Check to see if we already have a mapping for this arm, so set
+##   arm_index[tool number] and pt_index (third index for Points array) to
+##   the correct value.  This handles the case where a second (or more) 
+##   mapping for the same arm number exists.
+##
+
+        if arm_index[int(tool_num[0])] < 0:
+            arm_index[int(tool_num[0])]=Arm_Ind[Keys[Tag[line]]]
+            arm=Arm_Ind[Keys[Tag[line]]]
+            Arm_Ind[Keys[Tag[line]]]+=1
+            arm_count+=1
+            pt_index=0
+        else:
+            key=Keys[Tag[line]]
+            arm=arm_index[int(tool_num[0])]
+            pt_index=0
+            while Points[key][arm][pt_index] != (0.0,0.0):
+                pt_index+=1
+                if pt_index==NUM_PTS:
+                    print('WARNING: Points array too small for entry',entry,'on line',line,'...Skipping')
+                    err+=1
+                    break
+            
+            if pt_index==NUM_PTS:
+                continue
+
+##
+## Parse the line for the points for this arm and add them to the list
+##
+
+        mapping=re.findall(r'{""x"":([\d.]*),""y"":([\d.]*)}',seg)
+
+        if not mapping:
+            print('WARNING: Could not find any points for line ',line,' arm ',arms,'...Skipping')
+            err+=1
+            continue
+
+        for pt in mapping:
+            x=float(pt[1])+float(Offset[Tag[line]][0])
+            y=float(pt[0])+float(Offset[Tag[line]][1])
+            if (x+1>Size[Tag[line]][0]) or (y+1>Size[Tag[line]][1]):
+                continue
+            if args.verbose:
+                print(' X=',x,' Y=',y)
+                print("Arms=",arm," T_Index=",pt_index)
+            Points[int(Keys[Tag[line]])][arm][pt_index]=(x,y)
+            pt_index+=1                
+            if pt_index==NUM_PTS:
+                print('WARNING: Points array too small for entry',entry,'on line',line,'...Skipping')
+                err+=1
+                break
+
+    ind=np.where(Arm_Ct[Keys[Tag[line]]]==0)
+    Arm_Ct[Keys[Tag[line]]][ind[0][0]]+=arm_count
+    del(arm_index)
+
+##
+## Now that all the data has been put into the arrays, map each galaxy 
+##   subject id
+##
+
+for galaxy in Keys:
+
+    print('Mapping Galaxy '+galaxy+'.fits')
+
+##
+## Set initial variables:
+##   BAR        - Will hold the estimated bar/core size
+##   XCENTER    - X center position of original image
+##   YCENTER    - Y center position of original image
+##   IMAGE      - This is the final mapping of the image with all
+##                cumulative arm mapping, but prior to trimming/cropping.
+##                NOTE:  Since FITS uses a FORTRAN style data layout (column
+##                major ordering), we need to use an order parameter.  This
+##                avoids changing the shape/structure prior to any save.
+##   WORKING    - This is the mapping of a single set of arms.  This is 
+##                required to properly feather the arms before adding into
+##                the IMAGE array
+##
+
+    bar=float(Size[galaxy][0])
+    xcenter=int(Size[galaxy][0]/2)
+    ycenter=int(Size[galaxy][1]/2)
+
+    image=np.zeros((Size[galaxy][0],Size[galaxy][1]),dtype=np.float32,order='C')
+
+##
+## Set initial X & Y max and min values, if not already set for this galaxy.
+##
+
+    if galaxy not in Limit['maxX']:
+        Limit['minX'][galaxy]=Size[galaxy][0]
+        Limit['minY'][galaxy]=Size[galaxy][1]
+        Limit['maxX'][galaxy]=1
+        Limit['maxY'][galaxy]=1
+
+##
+## Now map each group of arms into the working array.  Rely on the fact that
+##   Arm_Ct has the number of arms mapped and these correspond to sequential
+##   blocks in the Points[Key][Arms][] list.
+##
+    
+    base=0
+    batch=0
+    while Arm_Ct[Keys[galaxy]][batch] != 0:
+        arm_num=Arm_Ct[Keys[galaxy]][batch]
+        batch+=1
+        work=np.zeros((Size[galaxy][0],Size[galaxy][1]),dtype=np.float32,order='F')
+
+        for a in range(0,arm_num):
+            pindex=0
+            while Points[int(Keys[galaxy])][a+base][pindex] != (0.0,0.0):
+                work[int(Points[int(Keys[galaxy])][a+base][pindex][0])][int(Points[int(Keys[galaxy])][a+base][pindex][1])]=255.0
+
+##
+## Determine if this point is a new outer limit for the arm mapping
+##
+
+                if int(Points[int(Keys[galaxy])][a+base][pindex][0]) > Limit['maxX'][galaxy]:
+                    Limit['maxX'][galaxy]=int(Points[int(Keys[galaxy])][a+base][pindex][0])
+                if int(Points[int(Keys[galaxy])][a+base][pindex][0]) < Limit['minX'][galaxy]:
+                    Limit['minX'][galaxy]=int(Points[int(Keys[galaxy])][a+base][pindex][0])
+
+                if int(Points[int(Keys[galaxy])][a+base][pindex][1]) > Limit['maxY'][galaxy]:
+                    Limit['maxY'][galaxy]=int(Points[int(Keys[galaxy])][a+base][pindex][1])
+                if int(Points[int(Keys[galaxy])][a+base][pindex][1]) < Limit['minY'][galaxy]:
+                    Limit['minY'][galaxy]=int(Points[int(Keys[galaxy])][a+base][pindex][1])
+            
+##
+## Determine distance to the center to try and update the bar/core size
+##   if needed
+##
+
+                xdistance=abs(float(Points[int(Keys[galaxy])][a+base][pindex][0])-float(Size[galaxy][0]/2))
+                ydistance=abs(float(Points[int(Keys[galaxy])][a+base][pindex][1])-float(Size[galaxy][1]/2))
+                distance=(xdistance**2+ydistance**2)**0.5
+
+                if distance < bar:
+                    bar=distance
+
+##
+## In order to get a good image for analysis, connect the point to the previous
+##   one (unless it's the first)
+##
+
+                if pindex > 0:
+                    x=float(Points[Keys[galaxy]][a+base][pindex][0])
+                    y=float(Points[Keys[galaxy]][a+base][pindex][1])
+                    last_x=float(Points[Keys[galaxy]][a+base][pindex-1][0])
+                    last_y=float(Points[Keys[galaxy]][a+base][pindex-1][1])
+
+##
+## Determine the x and Y slope values for the line based on the current
+##   point and the previous one
+##
+
+                    if (int(last_x)-int(x)) != 0.0:
+                        slopex=float(int(y)-int(last_y))/float(abs(int(last_x)-int(x)))
+                    else:
+                        slopex=0.0
+
+                    if (int(last_y)-int(y)) != 0.0:
+                        slopey=float(int(x)-int(last_x))/float(abs(int(last_y)-int(y)))
+                    else:
+                        slopey=0.0
+
+                    if args.verbose:
+                        print('X=',x,' Y=',y,' LAST_X=',last_x,' LAST_Y=',last_y)
+                        print('SLOPEX=',slopex,' SLOPEY=',slopey)
+
+##
+## Now that we now the X & Y slopes, see which dimension changes the most
+##   between the two points.  Reset the other slope value to be 1/-1 and
+##   determine the number of points to be drawn (pts).
+##
+
+                    if (abs(int(last_x)-int(x))>abs(int(last_y)-int(y))):
+                        pts=abs(int(last_x)-int(x))
+                        if (int(x)-int(last_x)) < 0:
+                            slopey=-1.0
+                        else:
+                            slopey=1.0
+                    else:
+                        pts=abs(int(last_y)-int(y))
+                        if (int(y)-int(last_y)) < 0:
+                            slopex=-1.0
+                        else:
+                            slopex=1.0
+
+                    if args.verbose:
+                        print('SLOPEX=',slopex,' SLOPEY=',slopey)
+
+##
+## Draw the intermediate points into the working image to connect the last
+##   traced point with the previous.
+##
+
+                    for t in range(1,pts):
+                        ax=int(last_x)+int(slopey*float(t))
+                        by=int(last_y)+int(slopex*float(t))
+                        if args.verbose:
+                            print('POINT: ',ax,':',by)
+                        work[ax][by]=255.0
+                        if FEATHER or args.feather:
+                            if args.feather:
+                                FEATHER=int(args.feather)
+                            for t in range (1,FEATHER+1):
+                                for s in range(1,FEATHER+1):
+                                    work[ax-t][by]=255.0;
+                                    work[ax][by-s]=255.0;
+                                    work[ax-t][by-s]=255.0;
+                                    work[ax+t][by]=255.0;
+                                    work[ax][by+s]=255.0;
+                                    work[ax+t][by+s]=255.0;
+                                    work[ax-t][by+s]=255.0;
+                                    work[ax+t][by-s]=255.0;
+
+                pindex+=1
+
+##
+## Print out sub images (if -s option specified) and merge the work image
+##   into the final output image
+##
+
+        base+=arm_num
+    
+        if args.sub:
+            new_work=np.zeros((Size[galaxy][0],Size[galaxy][1]),dtype=np.float32,order='C')
+            for i in range(0,Size[galaxy][0]):
+                for j in range(0,Size[galaxy][1]):
+                    new_work[i][j]=work[Size[galaxy][0]-1-i][j]
+
+            os.system('rm -f SUB_'+galaxy+'_'+str(batch)+'.fits')
+            hdu=fits.PrimaryHDU(new_work)
+            hdu.writeto('SUB_'+galaxy+'_'+str(batch)+'.fits')
+            del(new_work)
+
+        image+=work
+        del(work)
+
+##
+## If the option to fill in the core part of the image is specified on the 
+##   command line, do that here
+##
+
+    if args.core:
+        bar2=bar*bar
+        xc=int(xcenter)
+        yc=int(ycenter)
+        b=int(bar)
+        bar2=int(bar*bar)
+        for xx in range(xc-b,xc+b+1):
+            for yy in range(yc-b,yc+b+1):
+                if ((xx-xc)*(xx-xc)+(yy-yc)*(yy-yc)) <= bar2:
+                    image[xx][yy]=2048.0;
+
+##
+## Square the image (if not square already) so there is one common dimension.
+##   This is the radius of the untrimmed image.
+##
+
+    xsize=int((Size[galaxy][0]/2)-1)
+    ysize=int((Size[galaxy][1]/2)-1)
+    if xsize> ysize:
+        size=ysize
+    else:
+        size=xsize
+    if args.verbose:
+        print('xsize=',xsize,' ysize=',ysize,' Size=',size)
+
+##
+## Trim the image so that there is only PAD% blank space beyond the end of the
+##   most distant arm.
+##
+
+    trim=size
+    if args.verbose:
+        print('Starting trim=',trim,' minX=',Limit['minX'][galaxy],' maxX=',Limit['maxX'][galaxy],' minY=',Limit['minY'][galaxy],' minY=',Limit['minY'][galaxy])
+    if PAD:
+        trim=Limit['maxX'][galaxy]-int(xcenter)
+        if int(xcenter)-Limit['minX'][galaxy] > trim:
+            trim=int(xcenter)-Limit['minX'][galaxy]
+        if int(ycenter)-Limit['minY'][galaxy] > trim:
+            trim=int(ycenter)-Limit['minY'][galaxy]
+        if Limit['maxY'][galaxy]-int(ycenter) > trim:
+            trim=Limit['maxY'][galaxy]-int(ycenter)
+        if args.verbose:
+            print('Ending Trim=',trim)
+
+    trim=int(float(trim)*(1.0+PAD))
+    if args.verbose:
+        print('Padded Trim=',trim)
+    if trim > size:
+        trim=size
+
+    lowerx=int((Size[galaxy][0]/2)-trim)
+    if lowerx < 0:
+        print("WARNING: Internal Error: lowerx < 0 (",lowerx,")")
+        lowerx=0
+
+    lowery=int((Size[galaxy][1]/2)-trim)
+    if lowery < 0:
+        print("WARNING: Internal Error: lowerx < 0 (",lowerx,")")
+        lowery=0
+
+    if args.verbose:
+        print('LowerX=',lowerx,' LowerY=',lowery)
+
+##
+## Using the size determined above, create the array for the FITS image.
+##   The array must be the exact size of the image of the FITS routines
+##   will not work properly.
+##
+
+    dim=((xcenter-lowerx)*2)+1
+    
+    if args.verbose:
+        print('dim=',dim,'size=',size,'trim=',trim)
+    
+    new_image=np.zeros((dim,dim),dtype=np.float32,order='C')
+
+    for i in range(0,dim):
+        for j in range(0,dim):
+            new_image[i][j]=image[dim-1+lowerx-i][lowery+j]
+
+##
+## Write the FITS image.  Must first remove any existing FITS image or will get
+##   an error if the file already exists.
+##
+
+    os.system('rm -f '+galaxy+'.fits')
+    hdu=fits.PrimaryHDU(new_image)
+    hdu.writeto(galaxy+'.fits')
+    fits.setval(galaxy+'.fits','SUBJECT',value=galaxy)
+    fits.setval(galaxy+'.fits','BAR',value=str(int(round(bar))))
+
+##
+## To only include the non-zero values for the median number of arms
+##   calculation, use nummpy masking functions.  Otherwise, the zero
+##   values skew the number too low.
+##
+
+    vals=np.ma.masked_equal(Arm_Ct[Keys[galaxy]],0)
+    med=np.ma.median(vals)
+    fits.setval(galaxy+'.fits','ARMS',value=str(int(np.round(med))))
+    fits.setval(galaxy+'.fits','COMMENT',value='Generated by map.py Version '+VERSION)
+    del(image)
+

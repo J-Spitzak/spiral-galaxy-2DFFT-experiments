@@ -1,0 +1,690 @@
+#! /usr/bin/env python3
+
+##
+## P2LOGSP - Program to measure spiral pitch angles by overlaying 
+##           logarithmic spirals
+##
+## This is an interactive application that will display a FITS image and
+##   overlay a logarithmic spiral.  The spiral parameters can be adjusted
+##   until a close match to the image is found.
+##
+##
+## Version 1.2  20-Jun-2019
+##
+##
+## Authors:  Ian Hewitt & Dr. Patrick Treuthardt,
+##           NC Museum of Natural Sciences,
+##           Astronomy & Astrophysics Lab,
+##           Raleigh, NC USA.
+##           http://github.com/treuthardt/P2DFFT
+##
+##
+## LICENSE
+##
+## P2DFFT Spiral Galaxy Arm Pitch Angle Analysis Suite
+## Copyright (c) 2016-2019  Ian B. Hewitt & Dr. Patrick Treuthardt
+##
+## The program is free software:  you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by the Free
+## Software Foundation, version 3.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+## details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program.  If not, see < https://www.gnu.org/licenses >.
+##
+## The authors can be contacted at:
+##
+##      North Carolina Museum of Natural Sciences
+##      Astronomy & Astrophysics Laboratory
+##      11 West Jones Street
+##      Raleigh, NC, 27601  USA
+##      +1.919.707.9800
+##
+##      -- or --
+##
+##      patrick.treuthardt@naturalsciences.org
+##
+##
+## Usage: p2logsp <file> [<file>...]
+##
+##   You must specify at least one argument.
+##
+##   <files>         (Required) The filname of the FITS file(s) to be
+##                   processed.  Only the first argument is processed.
+##
+##
+##  Revision History:
+##         V1.2 - 20-Jun-2019 - Fix incorrect library requirements
+##         V1.1 - 18-Dec-2018 - Cleanup/update comments
+##                            - Update variable names
+##                            - Add buttons for ARM numbers
+##         V1.0 - 01-Aug-2018 - Initial version
+##
+##
+##  Requirements/Environment:
+##
+##     Python 3.x
+##     PyQt5 Library
+##     matplotlib Library
+##     astropy.io Library
+##
+##
+
+import sys
+
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton, QSlider, QHBoxLayout, QVBoxLayout, QLabel, QFrame
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt 
+ 
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+
+from astropy.io import fits
+ 
+import random
+
+import math
+
+##
+## NEED TO SET SWEEP BY HAND
+##
+
+SWEEP=180
+ARMS=2
+
+M_PI=3.1415926
+PA=35.0
+CHIR=1
+ROTATE=0.0
+R0=25.0
+
+
+def scaffold(image_matrix):
+
+    for x in range(0,XSIZE):
+        for y in range (0,YSIZE):
+            image_matrix[y][x]=0.0
+
+    if ARMS > 1:
+        seperation=360.0/float(ARMS)
+    else:
+        seperation=0.0
+
+    for theta in range(1,SWEEP):
+##
+## Calculate the radius value.  
+##
+
+        r = R0*math.exp(math.tan(abs(PA)*(M_PI/180.0))*theta*(M_PI/180.0))
+
+        for a in range(0,ARMS):
+
+            x=int((XSIZE/2)+(CHIR*int(r*math.cos((float(theta)+(float(a)*seperation+ROTATE))*(M_PI/180.0)))))
+            y=int((YSIZE/2)+int(r*math.sin((float(theta)+(float(a)*seperation+ROTATE))*(M_PI/180.0))))
+
+            if (x>-1) and (x<XSIZE) and (y>-1) and (y<YSIZE):
+                image_matrix[y][x]=8192.0
+
+##
+## This is the class for the main GUI Window
+##
+ 
+class App(QMainWindow):
+ 
+    def __init__(self):
+        global m
+        global Rot_Label
+        global Rot_Slider
+        global R0_Label
+        global R0_Slider
+        global PA_Label
+        global PA_Slider
+        global CLabel
+        global A_Label
+        super(App, self).__init__()
+        self.left = 10
+        self.top = 10
+        self.title = 'Pitch Angle Measuring Program'
+        self.width = (XSIZE+200)
+        self.height = (YSIZE+50)
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left, self.top, self.width, self.height)
+        main=QWidget(self)
+        main.left = 10
+        main.top = 10
+        main.width = (XSIZE+200)/2
+        main.height = (YSIZE+50)/2
+        main.setGeometry(self.left, self.top, self.width, self.height)
+
+        box1=QHBoxLayout()
+        box2=QVBoxLayout()
+ 
+        m = PlotCanvas(main, width=5, height=4)
+        m.move(0,0)
+
+        box1.addWidget(m)
+#
+# Place the Rotate Buttons
+#
+
+        Rot_Label=QLabel("Rotation = 0")
+        Rot_Label.setAlignment(Qt.AlignCenter)
+
+        box2.addWidget(Rot_Label)
+
+        Rot_Slider=QSlider(Qt.Horizontal)
+        Rot_Slider.setMinimum(-90)
+        Rot_Slider.setMaximum(90)
+        Rot_Slider.setValue(0)
+        Rot_Slider.setTickPosition(QSlider.TicksBelow)
+        Rot_Slider.setTickInterval(10)
+        Rot_Slider.valueChanged.connect(self.Rot_ValueChanged)
+        Rot_Slider.setFocusPolicy(Qt.StrongFocus)
+
+        box2.addStretch()
+        box2.addWidget(Rot_Slider)
+
+        box3=QHBoxLayout()
+
+        Rot_05pBtn = QPushButton('Rot + 5',self)
+        Rot_05pBtn.setToolTip('Rotate Five Degrees Clockwise')
+        Rot_05pBtn.clicked.connect(self.Rot_05pBtnAction)
+
+        box3.addWidget(Rot_05pBtn)
+
+        Rot_05nBtn = QPushButton('Rot - 5',self)
+        Rot_05nBtn.setToolTip('Rotate Five Degrees Counter-Clockwise')
+        Rot_05nBtn.clicked.connect(self.Rot_05nBtnAction)
+
+        box3.addStretch()
+        box3.addWidget(Rot_05nBtn)
+        box2.addLayout(box3)
+
+        box4=QHBoxLayout()
+
+        Rot_01pBtn = QPushButton('Rot + 1',main)
+        Rot_01pBtn.setToolTip('Rotate One Degree Clockwise')
+        Rot_01pBtn.clicked.connect(self.Rot_01pBtnAction)
+
+        box4.addWidget(Rot_01pBtn)
+
+        Rot_01nBtn = QPushButton('Rot - 1',main)
+        Rot_01nBtn.setToolTip('Rotate One Degree Counter-Clockwise')
+        Rot_01nBtn.clicked.connect(self.Rot_01nBtnAction)
+
+        box4.addStretch()
+        box4.addWidget(Rot_01nBtn)
+        box2.addLayout(box4)
+
+        Rot_sep=QFrame()
+        Rot_sep.setFrameShape(QFrame.HLine)
+        Rot_sep.setFrameShadow(QFrame.Sunken)
+
+        box2.addStretch()
+        box2.addWidget(Rot_sep)
+
+#
+# Place the R0 (Bar/Core Radius) Buttons
+#
+
+        R0_Label=QLabel('R0 (Pixels) = '+str(R0))
+        R0_Label.setAlignment(Qt.AlignCenter)
+
+        box2.addWidget(R0_Label)
+
+        R0_Slider=QSlider(Qt.Horizontal)
+        R0_Slider.setMinimum(1)
+        R0_Slider.setMaximum(300)
+        R0_Slider.setValue(R0)
+        R0_Slider.setTickPosition(QSlider.TicksBelow)
+        R0_Slider.setTickInterval(10)
+        R0_Slider.valueChanged.connect(self.R0_ValueChanged)
+        R0_Slider.setFocusPolicy(Qt.StrongFocus)
+
+        box2.addStretch()
+        box2.addWidget(R0_Slider)
+
+        box5=QHBoxLayout()
+
+        R0_10pBtn = QPushButton('R0 + 10',self)
+        R0_10pBtn.setToolTip('Increase R0 Size by 10')
+        R0_10pBtn.clicked.connect(self.R0_10pBtnAction)
+
+        box5.addWidget(R0_10pBtn)
+
+        R0_10nBtn = QPushButton('R0 - 10',self)
+        R0_10nBtn.setToolTip('Decrease R0 Size by 10')
+        R0_10nBtn.clicked.connect(self.R0_10nBtnAction)
+
+        box5.addStretch()
+        box5.addWidget(R0_10nBtn)
+        box2.addLayout(box5)
+
+        box6=QHBoxLayout()
+
+        R0_01pBtn = QPushButton('R0 + 1',self)
+        R0_01pBtn.setToolTip('Increase R0 Size by 1')
+        R0_01pBtn.clicked.connect(self.R0_01pBtnAction)
+
+        box6.addWidget(R0_01pBtn)
+
+        R0_01nBtn = QPushButton('R0 - 1',self)
+        R0_01nBtn.setToolTip('Decrease R0 Size by 1')
+        R0_01nBtn.clicked.connect(self.R0_01nBtnAction)
+
+        box6.addStretch()
+        box6.addWidget(R0_01nBtn)
+        box2.addLayout(box6)
+
+        R0_sep=QFrame()
+        R0_sep.setFrameShape(QFrame.HLine)
+        R0_sep.setFrameShadow(QFrame.Sunken)
+
+        box2.addStretch()
+        box2.addWidget(R0_sep)
+
+#
+# Place the PA Buttons
+#
+
+        PA_Label=QLabel('P.A. = '+str(PA))
+        PA_Label.setAlignment(Qt.AlignCenter)
+
+        box2.addWidget(PA_Label)
+
+        PA_Slider=QSlider(Qt.Horizontal)
+        PA_Slider.setMinimum(0)
+        PA_Slider.setMaximum(90)
+        PA_Slider.setValue(PA)
+        PA_Slider.setTickPosition(QSlider.TicksBelow)
+        PA_Slider.setTickInterval(10)
+        PA_Slider.valueChanged.connect(self.PA_ValueChanged)
+        PA_Slider.setFocusPolicy(Qt.StrongFocus)
+
+        box2.addStretch()
+        box2.addWidget(PA_Slider)
+
+        box8=QHBoxLayout()
+
+        PA_1pBtn = QPushButton('PA + 1',self)
+        PA_1pBtn.setToolTip('Increase Pitch Angle by 1 Degree')
+        PA_1pBtn.clicked.connect(self.PA_1pBtnAction)
+
+        box8.addWidget(PA_1pBtn)
+
+        PA_1nBtn = QPushButton('PA - 1',self)
+        PA_1nBtn.setToolTip('Reduce Pitch Angle by 1 Degree')
+        PA_1nBtn.clicked.connect(self.PA_1nBtnAction)
+
+        box8.addStretch()
+        box8.addWidget(PA_1nBtn)
+        box2.addLayout(box8)
+
+        box9=QHBoxLayout()
+
+        PA_5pBtn = QPushButton('PA + 5',self)
+        PA_5pBtn.setToolTip('Increase Pitch Angle by 5 Degrees')
+        PA_5pBtn.clicked.connect(self.PA_5pBtnAction)
+
+        box9.addWidget(PA_5pBtn)
+
+        PA_5nBtn = QPushButton('PA - 5',self)
+        PA_5nBtn.setToolTip('Reduce Pitch Angle by 5 Degrees')
+        PA_5nBtn.clicked.connect(self.PA_5nBtnAction)
+
+        box9.addStretch()
+        box9.addWidget(PA_5nBtn)
+        box2.addLayout(box9)
+
+        PA_sep=QFrame()
+        PA_sep.setFrameShape(QFrame.HLine)
+        PA_sep.setFrameShadow(QFrame.Sunken)
+
+        box2.addStretch()
+        box2.addWidget(PA_sep)
+
+#
+# Place the Chirality Buttons
+#
+
+        CLabel=QLabel('Chirality S-wise (+)')
+        CLabel.setAlignment(Qt.AlignCenter)
+
+        box2.addWidget(CLabel)
+
+        box10=QHBoxLayout()
+
+        CpBtn = QPushButton('S-wise',self)
+        CpBtn.setToolTip('Change to Positive Chirality')
+        CpBtn.clicked.connect(self.CpBtnAction)
+
+        box10.addWidget(CpBtn)
+
+        CnBtn = QPushButton('Z-wise',self)
+        CnBtn.setToolTip('Change to Negative Chirality')
+        CnBtn.clicked.connect(self.CnBtnAction)
+
+        box10.addStretch()
+        box10.addWidget(CnBtn)
+        box2.addLayout(box10)
+
+        Csep=QFrame()
+        Csep.setFrameShape(QFrame.HLine)
+        Csep.setFrameShadow(QFrame.Sunken)
+
+        box2.addStretch()
+        box2.addWidget(Csep)
+
+#
+# Place the Arms Buttons
+#
+
+        A_Label=QLabel('2 Arms')
+        A_Label.setAlignment(Qt.AlignCenter)
+
+        box2.addWidget(A_Label)
+
+        box11=QHBoxLayout()
+
+        A1_Btn = QPushButton('1',self)
+        A1_Btn.setToolTip('Change to 1 arm spiral')
+        A1_Btn.clicked.connect(self.A1_BtnAction)
+
+        box11.addWidget(A1_Btn)
+
+        A2_Btn = QPushButton('2',self)
+        A2_Btn.setToolTip('Change to 2 arm spiral')
+        A2_Btn.clicked.connect(self.A2_BtnAction)
+
+        box11.addStretch()
+        box11.addWidget(A2_Btn)
+        
+        box2.addLayout(box11)
+
+        box12=QHBoxLayout()
+
+        A3_Btn = QPushButton('3',self)
+        A3_Btn.setToolTip('Change to 3 arm spiral')
+        A3_Btn.clicked.connect(self.A3_BtnAction)
+
+        box12.addStretch()
+        box12.addWidget(A3_Btn)
+
+        A4_Btn = QPushButton('4',self)
+        A4_Btn.setToolTip('Change to 4 arm spiral')
+        A4_Btn.clicked.connect(self.A4_BtnAction)
+
+        box12.addStretch()
+        box12.addWidget(A4_Btn)
+
+        box2.addLayout(box12)
+
+        box13=QHBoxLayout()
+
+        A5_Btn = QPushButton('5',self)
+        A5_Btn.setToolTip('Change to 5 arm spiral')
+        A5_Btn.clicked.connect(self.A5_BtnAction)
+
+        box13.addStretch()
+        box13.addWidget(A5_Btn)
+
+        A6_Btn = QPushButton('6',self)
+        A6_Btn.setToolTip('Change to 6 arm spiral')
+        A6_Btn.clicked.connect(self.A6_BtnAction)
+
+        box13.addStretch()
+        box13.addWidget(A6_Btn)
+
+        box2.addLayout(box13)
+
+        A_sep=QFrame()
+        A_sep.setFrameShape(QFrame.HLine)
+        A_sep.setFrameShadow(QFrame.Sunken)
+
+        box2.addStretch()
+        box2.addWidget(A_sep)
+
+        box1.addLayout(box2)
+        main.setLayout(box1)
+        self.show()
+
+##
+## Rotate Button Callbacks
+##
+
+    def Rot_ValueChanged(self):
+        global ROTATE
+        ROTATE=Rot_Slider.value()
+        Rot_Label.setText('Rotation = '+str(ROTATE))
+        scaffold(MODEL)
+        m.redraw()
+
+    def Rot_05pBtnAction(self):
+        global ROTATE
+        ROTATE=ROTATE+5.0
+        Rot_Label.setText('Rotation = '+str(ROTATE))
+        scaffold(MODEL)
+        m.redraw()
+
+    def Rot_01pBtnAction(self):
+        global ROTATE
+        ROTATE=ROTATE+1.0
+        Rot_Label.setText('Rotation = '+str(ROTATE))
+        scaffold(MODEL)
+        m.redraw()
+
+    def Rot_05nBtnAction(self):
+        global ROTATE
+        ROTATE=ROTATE-5.0
+        Rot_Label.setText('Rotation = '+str(ROTATE))
+        scaffold(MODEL)
+        m.redraw()
+
+    def Rot_01nBtnAction(self):
+        global ROTATE
+        ROTATE=ROTATE-1.0
+        Rot_Label.setText('Rotation = '+str(ROTATE))
+        scaffold(MODEL)
+        m.redraw()
+
+##
+## R0 Button Callbacks
+##
+
+    def R0_ValueChanged(self):
+        global R0
+        R0=R0_Slider.value()
+        R0_Label.setText('R0 (Pixels) = '+str(R0))
+        scaffold(MODEL)
+        m.redraw()
+
+    def R0_10pBtnAction(self):
+        global R0
+        R0=R0+10.0
+        R0_Label.setText('R0 (Pixels) = '+str(R0))
+        scaffold(MODEL)
+        m.redraw()
+
+    def R0_01pBtnAction(self):
+        global R0
+        R0=R0+1.0
+        R0_Label.setText('R0 (Pixels) = '+str(R0))
+        scaffold(MODEL)
+        m.redraw()
+
+    def R0_10nBtnAction(self):
+        global R0
+        R0=R0-10.0
+        R0_Label.setText('R0 (Pixels) = '+str(R0))
+        scaffold(MODEL)
+        m.redraw()
+
+    def R0_01nBtnAction(self):
+        global R0
+        R0=R0-1.0
+        R0_Label.setText('R0 (Pixels) = '+str(R0))
+        scaffold(MODEL)
+        m.redraw()
+
+##
+## PA (Pitch Angle) Button Callbacks
+##
+
+    def PA_ValueChanged(self):
+        global PA
+        PA=float(PA_Slider.value())/100.0
+        PA_Label.setText('PA = '+str(PA))
+        scaffold(MODEL)
+        m.redraw()
+
+    def PA_1pBtnAction(self):
+        global PA
+        PA=PA+1.0
+        PA_Label.setText('PA = '+str(PA))
+        scaffold(MODEL)
+        m.redraw()
+
+    def PA_5pBtnAction(self):
+        global PA
+        PA=PA+5.0
+        PA_Label.setText('PA = '+str(PA))
+        scaffold(MODEL)
+        m.redraw()
+
+    def PA_1nBtnAction(self):
+        global PA
+        PA=PA-1.0
+        PA_Label.setText('PA = '+str(PA))
+        scaffold(MODEL)
+        m.redraw()
+
+    def PA_5nBtnAction(self):
+        global PA
+        PA=PA-5.0
+        PA_Label.setText('PA = '+str(PA))
+        scaffold(MODEL)
+        m.redraw()
+
+##
+## Chirality Button Callbacks
+##
+
+    def CpBtnAction(self):
+        global CHIR
+        CHIR=CHIR*-1.0
+        CLabel.setText('Chirality Z-wise (-)')
+        scaffold(MODEL)
+        m.redraw()
+
+    def CnBtnAction(self):
+        global CHIR
+        CHIR=CHIR*-1.0
+        CLabel.setText('Chirality S-Wise (+)')
+        scaffold(MODEL)
+        m.redraw()
+
+##
+## Arm Button Callbacks
+##
+
+    def A1_BtnAction(self):
+        global ARMS
+        ARMS=1
+        A_Label.setText('1 Arm ')
+        scaffold(MODEL)
+        m.redraw()
+
+    def A2_BtnAction(self):
+        global ARMS
+        ARMS=2
+        A_Label.setText('2 Arms')
+        scaffold(MODEL)
+        m.redraw()
+
+    def A3_BtnAction(self):
+        global ARMS
+        ARMS=3
+        A_Label.setText('3 Arms')
+        scaffold(MODEL)
+        m.redraw()
+
+    def A4_BtnAction(self):
+        global ARMS
+        ARMS=4
+        A_Label.setText('4 Arms')
+        scaffold(MODEL)
+        m.redraw()
+
+    def A5_BtnAction(self):
+        global ARMS
+        ARMS=5
+        A_Label.setText('5 Arms')
+        scaffold(MODEL)
+        m.redraw()
+
+    def A6_BtnAction(self):
+        global ARMS
+        ARMS=6
+        A_Label.setText('6 Arms')
+        scaffold(MODEL)
+        m.redraw()
+
+class PlotCanvas(FigureCanvas):
+ 
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+ 
+        FigureCanvas.__init__(self, fig)
+        self.setParent(parent)
+ 
+        FigureCanvas.setSizePolicy(self,
+                QSizePolicy.Expanding,
+                QSizePolicy.Expanding)
+        FigureCanvas.updateGeometry(self)
+        self.plot()
+ 
+ 
+    def plot(self):
+        global ax
+        ax = self.figure.add_subplot(111)
+        self.redraw()
+
+    def redraw(self):
+        global layer1
+        global layer2
+        global image_data
+        layer1=ax.imshow(image_data, cmap=plt.cm.gray, origin='lower')
+
+        layer2=ax.imshow(MODEL, cmap=plt.cm.inferno, alpha=.35)
+        self.draw()
+ 
+
+##
+## MAIN program
+##
+
+fname=sys.argv[1]
+hdu=fits.open(fname)
+XSIZE=hdu[0].header['NAXIS2']
+YSIZE=hdu[0].header['NAXIS1']
+
+image_data=[[0.0 for i in range(0,XSIZE)] for j in range(0,YSIZE)]
+
+for j in range(0,YSIZE):
+    for i in range(0,XSIZE):
+        image_data[j][i]=hdu[0].data[XSIZE-1-i][j]
+
+print('XS='+str(XSIZE)+' Y_S='+str(YSIZE))
+MODEL=[[0.0 for g in range(0,XSIZE)] for h in range(0,YSIZE)]
+scaffold(MODEL)
+
+app = QApplication(sys.argv)
+ex = App()
+sys.exit(app.exec_()) 

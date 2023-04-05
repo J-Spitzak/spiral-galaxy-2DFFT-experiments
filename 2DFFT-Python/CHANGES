@@ -1,0 +1,1422 @@
+This file is a summary of the changes for all releases of p2dfft.  Please see 
+the README.pdf for more details on the current release.
+
+ Authors:  Ian Hewitt & Dr. Patrick Treuthardt,
+           NC Museum of Natural Sciences,
+           Astronomy & Astrophysics Lab,
+           Raleigh, NC USA.
+           http://github.com/treuthardt/P2DFFT
+
+
+ LICENSE
+
+ P2DFFT Spiral Galaxy Arm Pitch Angle Analysis Suite
+ Copyright (c) 2016-2019  Ian B. Hewitt & Dr. Patrick Treuthardt
+
+ The program is free software:  you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the Free
+ Software Foundation, version 3.
+
+ This program is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS
+ FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ details.
+
+ You should have received a copy of the GNU General Public License along with
+ this program.  If not, see < https://www.gnu.org/licenses >.
+
+ The authors can be contacted at:
+
+      North Carolina Museum of Natural Sciences
+      Astronomy & Astrophysics Laboratory
+      11 West Jones Street
+      Raleigh, NC, 27601  USA
+      +1.919.707.9800
+
+      -- or --
+
+      patrick.treuthardt@naturalsciences.org
+
+
+
+5.2.2  20-Jun-2019
+
+  [ENHANCEMENTS]
+
+  * Update README.docx/README.pdf to better clarify usage of the utilities
+
+  * Change filenames in package to be more consistent (p2 prefix) and to avoid
+    collisions with other package commands (and update makefiles)
+
+  * Add two output fields to p2pa in order to confirm which method was used in
+    the bar size and dominant mode selections
+
+  [BUG FIXES]
+
+  * Remove fix for FFTW row/colum sense introduced in 5.2.1 because it created
+    errors in measurements
+
+  * Fix bug for images generated with p2ifft
+
+  * Fix bug in p2ifft usage information
+
+  * Correct/rework some DEBUG printing in p2ifft
+
+  * Fix p2ifft bounds checking bug where isnan() did not detect -nan
+
+  * Fix improper original author attribution in several files (with apologies
+    to the original authors)
+
+  * Clarify licensing/contact information (no changes to licensing)
+
+  * Fix bug where boost was installed with the main programs and not the 
+    optional ones
+
+  * Fix improper library requirement documentation in p2logsp
+
+  [VERSIONS]
+
+    astro_class.cpp - 3.0/20180610
+    astro_class.h - 2.0/20180526
+    CHANGES - 5.2.2/20190620
+    globals.h - 1.1/20180601
+    input.txt - N/A
+    makefile - 5.1/20190620
+    makefile.macos - 1.1/20190620
+    p2boost - 2.2/20190216  <-- Name change from boost.py
+    p2chart_freq.py - 1.1/20190216  <-- Name change from chart_freq.py
+    p2dfft.cpp - 5.9/20190620
+    p2filter - 1.1/20190216  <-- Name change from filter.py
+    p2ifft.cpp - 3.4/20190620  <-- Name change from ifft.cpp
+    p2logsp - 1.2/20190620  <-- Name change from logsp.py
+    p2map.cpp - 1.2/20190503  <-- Name change from map.cpp
+    p2pa - 1.5/20190620  <-- Name change from pa.py
+    p2spiral.cpp - 4.1/20181213  <-- Name change from spiral.cpp
+    p2txt2fits.c - 1.3/20170828  <-- Name change from txt2fits.c
+    p2zname - 1.0/20190216  <-- Name change from zname.py
+    p2zoo - 3.3/20190602  <-- Name change from zoo.py
+    pitch_class.h - 1.3/20180407
+    pitch_class.cpp - 1.3/20180407
+    README.docx - 5.2.2/20190620
+    README.pdf - 5.2.2/20190620
+    sp_input.txt - N/A
+    PA_Notes.odt - 1.3/20181218
+    PA_Notes.pdf - 1.3/20181218
+
+
+5.2.1  04-Jun-2019
+
+  [ENHANCEMENTS]
+
+  * Change default feathering value in zoo.py to 1 to improve low PA accuracy
+
+  [BUG FIXES]
+
+  * Fix bug in FFTW row/colum sense that caused slightly reduced resolution in
+    both ifft and p2dfft
+
+  * Remove accidental debug information print from ifft
+
+  * Fix bug in ifft centering algorithm
+
+  * Fix bug in zoo.py where ARMS keyword was saved as floating point
+
+  * Fix trimming bug in zoo.py 
+
+  [KNOWN ISSUES]
+
+  * There are some issues with generating mode specific images with ifft, but
+    the all mode images have been improved over previous releases.
+
+  [OTHER]
+
+  * Remove unused/deprecated -s code in p2dfft.cpp
+
+  * Remove unused/deprecated -a code in ifft.cpp
+
+  [VERSIONS]
+
+    astro_class.cpp - 3.0/20180610
+    astro_class.h - 2.0/20180526
+    boost.py - 2.2/20190216
+    CHANGES - 5.2.1/20190604
+    chart_freq.py - 1.1/20190216
+    filter.py - 1.1/20190216
+    globals.h - 1.1/20180601
+    ifft.cpp - 3.3/20190603
+    input.txt - N/A
+    logsp.py - 1.1/20181218
+    map.cpp - 1.2/20190503
+    makefile - 5.0/20190521
+    makefile.macos - 1.0/20190521
+    p2dfft.cpp - 5.8/20190603
+    pa.py - 1.4/20190503
+    pitch_class.h - 1.3/20180407
+    pitch_class.cpp - 1.3/20180407
+    README.docx - 5.2.1/20190604
+    README.pdf - 5.2.1/20190604
+    sp_input.txt - N/A
+    spiral.cpp - 4.1/20181213
+    txt2fits.c - 1.3/20170828
+    PA_Notes.odt - 1.3/20181218
+    PA_Notes.pdf - 1.3/20181218
+    zname.py - 1.0/20190216
+    zoo.py - 3.3/20190602
+
+
+5.2  21-May-2019 (Replaces internal interim release 5.1)
+
+  [ENHANCEMENTS]
+
+  * Change READNE froma simple text file to Word document and PDF to add
+    features and improve readability
+
+  * Change zoo.py orientation of sub images to match that of the output images
+
+  * Add build instructions for macOS including a special makefile
+
+  * Change alrgorithm to read data file through before mapping points to get
+    sizes of images.  This allows the use of the first occurrence of a mapping
+    even if the size parameters are not there.
+
+  * Change pa.py to use ARMS and BAR variable as the default settings if they
+    are found in the FITS header, unless the -a and -s options are specified.
+
+  * Add -n and -m options to pa.py to override BAR entry and ARMS entries in
+    pa.py
+
+  * Add zname.py utility
+
+  * Change algorithm in zoo.py so that multiple tracings on the same subject
+    id will be added together in a single imag
+
+  * Add additaional debugging information to p2dfft.cpp to provide rip
+    mapping information
+
+  [BUG FIXES]
+
+  * Fix incorrect attribtion for the original author in p2dfft.cpp
+
+  * Fix bug in makefile where sample input file was not included in the
+    distribution package
+
+  * Correct bug in zoo.py where max/min X/Y were not calculated correctly for
+    images with more than one tracing
+
+  * Fix bug in lowery bounds checking in zoo.py
+
+  * Fix bug in in zoo.py where the output image was squared using the smallest
+    dimension, not the largest.  This could result in cropped images.  This
+    also means the smaller dimension needs an offset added to the center/point
+    mapping.
+
+  * Fix bug in size checking
+
+  * Fix bug in zoo.py that caused measurements of non-square images to be
+    centered incorrectly
+
+  * Fix incorrect file headers in map.cpp
+
+  * Clean up deprecated comments in Python utilities
+
+  * Fix bug in zoo.py where ARMS and BAR variable were not integers
+
+  * Remove deprecated libraries in Python utilities
+
+  * Fix bug in pa.py where highest amplitude in chart was not set correctly
+
+  [OTHER]
+
+  * Update numpy masked median checking in zoo.py to account for functional
+    changes in the latest libraries
+
+  * Remove -s option from p2dfft as it is now the default mode
+
+  * Updates to comments to reflect current libraries used in Python utilities
+
+  * Remove deprected -n option from zoo.py
+
+  * Updated README.txt to match changes in the code and to improve readability
+
+  [VERSIONS]
+
+    astro_class.cpp - 3.0/20180610
+    astro_class.h - 2.0/20180526
+    boost.py - 2.2/20190216
+    CHANGES - 5.2/20190521
+    chart_freq.py - 1.1/20190216
+    filter.py - 1.1/20190216
+    globals.h - 1.1/20180601
+    ifft.cpp - 3.2/20190131
+    input.txt - N/A
+    logsp.py - 1.1/20181218
+    map.cpp - 1.2/20190503
+    makefile - 5.0/20190521
+    makefile.macos - 1.0/20190521 <-- New file for this release
+    p2dfft.cpp - 5.7/20190521
+    pa.py - 1.4/20190503
+    pitch_class.h - 1.3/20180407
+    pitch_class.cpp - 1.3/20180407
+    README.docx - 5.2/20190521
+    README.pdf - 5.2/20190521
+    README.txt  <-- File removed for this release
+    sp_input.txt - N/A
+    spiral.cpp - 4.1/20181213
+    txt2fits.c - 1.3/20170828
+    PA_Notes.odt - 1.3/20181218
+    PA_Notes.pdf - 1.3/20181218
+    zname.py - 1.0/20190216 <-- New file for this release
+    zoo.py - 3.2/20190517
+
+
+5.0  31-Jan-2019 - RM02
+
+  [BUG FIXES]
+
+  * Correct error in makefile rule that included deprecated files
+
+  * Correct error in ifft.cpp where newer compilers would return an error
+
+  [OTHER]
+
+  * Add instructions for installing required Python 3 libraries
+
+  [VERSIONS]
+
+    astro_class.cpp - 3.0/20180610
+    astro_class.h - 2.0/20180526
+    boost.py - 2.1/20181218
+    CHANGES - 5.0/20190131
+    chart_freq.py - 1.0/20180801
+    filter.py - 1.0/20180801
+    globals.h - 1.1/20180601
+    ifft.cpp - 3.2/20190131
+    input.txt - N/A
+    logsp.py - 1.1/20181218
+    map.cpp - 1.1/20181113
+    makefile - 4.9/20181229
+    p2dfft.cpp - 5.5/20181218
+    pa.py - 1.2/20181213
+    pitch_class.h - 1.3/20180407
+    pitch_class.cpp - 1.3/20180407
+    README.txt - 5.0/20190131
+    sp_input.txt - N/A
+    spiral.cpp - 4.1/20181213
+    txt2fits.c - 1.3/20170828
+    PA_Notes.odt - 1.3/20181218
+    PA_Notes.pdf - 1.3/20181218
+    zoo.py - 2.4/20181218
+
+
+5.0  18-Dec-2018 - RM01
+
+  [ENHANCEMENTS]
+
+  * Rename vfit.py (was fit.py) to pa.py and make sigificant algorithm changes.
+    It now sums individual FFT components (real and imaginary) and then
+    uses them to derive an overall frequency/amplitude curve.
+
+  * Add text table output with T_<prefix> name in map.cpp
+
+  * Update FITS mapping code in ifft.cpp to account for differences in ordering
+    from CFITSIO<-->C/C++
+
+  * Add RMxx indicator to release number in makefile.  This will aid in tracking
+    patch levels for internal use
+
+  * Add arm number buttons to logsp.py
+
+  [BUG FIXES]
+
+  * Fix bug in p2dfft.cpp where the save files are not created in the current
+    working directory if the source FITS file is not located in the current
+    working directory
+
+  * Fix bug in p2dfft where failure to write the *.rip and *.dat files could
+    cause a crash
+
+  * Fix bug in feathering algorithm in zoo.py
+
+  * Fix bug in feathering algorithm in spiral.cpp
+
+  * Fix error handling bug in map.cpp
+
+  * Fix small version display bug in boost.py and ifft.cpp
+
+  * Fix bug in ifft.cpp where the file error count was not incremented on error
+
+  * Fix bug in ifft.cpp where the default mode values were not correct
+
+  * Fix bug in zoo.py where chirality would be reversed
+ 
+  * Fix bug in ifft input handling that could cause an infinite loop
+
+  * Fix minor bug in ifft verbose print statements
+
+  * Fix bug in ifft output file naming when specific mode was selected
+
+  * Fix bug where using an input file with no mode string did not cause the
+    default modes to be selected
+
+  [KNOWN ISSUES]
+
+  [OTHER]
+
+  * Improve algorithm in ifft to get better results:
+        - Remove average for summed data
+        - Exclude mode 0 by default
+        - Check for NaN in FFT data and exclude
+        - Remove normalization from data as FFTW3 will scalle the array
+
+  * Remove ASCII fits output option from ifft.cpp
+
+  * Remove Python version detection in Python scripts and change print()
+    statements to be Python-3 style
+
+  * Change matrix output in map.cpp to have M_ prefix
+
+  * Update map.cpp error messages to be consistent
+
+  * Update error messages in map.cpp
+
+  * Change default file extension in pa.py from .txt to .csv
+
+  * Remove deprecated image files Blank.jpg and I_blank.jpg
+
+  * Update variable names in logsp.py
+
+  * Remove deprecated -i (input file) option from pa.py
+
+  [VERSIONS]
+
+    astro_class.cpp - 3.0/20180610
+    astro_class.h - 2.0/20180526
+    boost.py - 2.1/20181218 <-- New file for this release
+    CHANGES - 5.0/20181218
+    chart_freq.py - 1.0/20180801 <-- New file for this release
+    filter.py - 1.0/20180801 <-- New file for this release
+    give_maximum_pitch_phase.f <-- File removed for this release
+    globals.h - 1.1/20180601 <-- New file for this release
+    ifft.cpp - 3.1/20181218
+    input.txt - N/A
+    logsp.py - 1.1/20181218 <-- New file for this release
+    map.cpp - 1.1/20181113 <-- New file for this release
+    makefile - 4.8/20181030
+    p2dfft.cpp - 5.5/20181218
+    pa.py - 1.2/20181213 <-- Was avg.py, fit.py, then vfit.py change name back
+    pitch_class.h - 1.3/20180407 <-- New file for this release
+    pitch_class.cpp - 1.3/20180407 <-- New file for this release
+    README.txt - 5.0/20181218
+    sp_input.txt - N/A
+    spiral.cpp - 4.1/20181213
+    txt2fits.c - 1.3/20170828
+    PA_Notes.odt - 1.3/20181218
+    PA_Notes.pdf - 1.3/20181218
+    zoo.py - 2.4/20181218 <-- New file for this release
+
+
+5.0  30-Oct-2018 - BETA 3 - PATCH LEVEL 02
+
+  [BUG FIXES]
+
+  * Correct incorrect step in CFITSIO installation instructions where the 
+    --prefix parameter was not included
+
+  [VERSIONS]
+
+    CHANGES - 5.0/20181030
+    ifft.cpp - 4.8/20181023
+    README.txt - 5.0/20181030
+
+
+5.0  20-Oct-2018 - BETA 3 - PATCH LEVEL 01
+
+  [ENHANCEMENTS]
+
+  * Add FITS header keyword for subject_id in zoo.py
+
+  [BUG FIXES]
+
+  * Correct error in zoo.py where gaps could be created by rounding problems
+    in point connecting line calculations
+
+  [VERSIONS]
+
+    CHANGES - 5.0/20181023
+    makefile - 4.8/20181023
+    README.txt - 5.0/20181023
+    zoo.py - 2.2/20181023
+
+
+5.0  20-Oct-2018 - BETA 3
+ 
+  [ENHANCEMENTS]
+
+  * Increase mximum dimensions in spiral and allow it to generate non-square
+    images
+
+  * Add globals.h file where constants reside (like maximum dimensions and
+    file sizes) so any changes are consistent across C++ programs
+
+  * Add support for adding a bar to the models generated by spiral.cpp
+
+  * Change any remaining C files to C++ and remove FORTRAN dependencies
+
+  * Change programs like spiral to use FITS writing code in astro_class
+
+  * Changed makefile to only build necessary files with all and install.  Other
+    files can be built with "opt" and "optinstall"
+
+  * Updated makefile with rules to build files that transitioned to C++ and add
+    rules for new files
+
+  * Added curl libraries to makefile build rules
+
+  * Added mask option (-m) to p2dfft to remove bright core/bar values from image
+
+  * Added zero option (-z) to create an artifical FFT window by zeroing margin
+    values in polar image
+
+  * Added polar option (-p) to generate a FITS image of the polar mapping
+    projection
+
+  * Update astro_class.cpp and xxxxxx to useg FITSIO 2D img routines to keep a
+    a constant row/column ordering
+
+  * Significant changes to the file I/O scheme in p2dfft.cpp.  Will no longer
+     write/use temporary files (.rip & .data) if save_rip is not enabled.
+
+  * When using save_rip, the data files are no longer created in the current
+    working directory, but are created in the <result_file> subdirectory.
+
+  * Remove external give_maximum_pitch_phase executable and replace it with a
+    pitch_class function.  This eliminates the need for FORTRAN and a multitude
+    of interim working files.
+
+  * Remove requirement that images are square
+
+  * Add version print function to astro_class
+
+  * Add get_err function and remove external variable for error numbers in
+    astr_class
+
+  * Remove p2dfft code to automatically remove working files in the current
+    directory and change the code which creates the <result_file> output files
+
+  * Add comments for variables and change some variable names to de-obsfucate
+    the code in multiple files
+
+  * Add version print function to the astro_class
+
+  * Move global constants to a separate common include file
+
+  * Add capability to override default number of threads in p2dfft.cpp
+
+  * Add detailed comments for array mapping information in p2dfft.cpp
+
+  * Add error handling for output files in p2dfft.cpp, including deselecting
+    save_rip if data files can't be opened
+
+  * Add ability to make printing of warnings option for multiple programs. Add
+    set_warn() function to astro_class().
+
+  * Add ASTRO_????? return codes to astro_class.cpp/.h
+
+  * Add fits_write() and fits_header_write() functions to astro_class.cpp/.h
+
+  * Add chart_freq.py program to plot FFT frequencies vs pitch angles
+
+  * Add filter.py to check effects of preprocessing values used in boost.py
+
+  * Add the fit.py program which uses additive FFT data from all annuli to
+    determine pitch angles
+
+  * Add zoo.py program for mapping points from spiral graph zooniverse project
+    into FITS files
+
+  [BUG FIXES]
+
+  * Fix bug where non-comma delimiters not working in spiral
+
+  * Clean up version print code and add class version outputs for multiple files
+
+  * Fix bug where specifying a non-local file to p2dfft would cause errors when
+    the output files were written (add remove_extension) routine
+
+  * Change DEBUG to be a variable, not a compiler conditional
+
+  * Remove makefile rules for deprecated files
+
+  * Add include files to makefile build prerequisite checks
+
+  * Remove unused variables in files
+
+  * Fix astro_class routines to automatically print error messages
+
+  * Fix bug in fits_read in astro_class.cpp where a fixed size buffer allocated
+    instead on of one based on the read size specified
+
+  * Fix bug in debug statement in astro_class.cpp (very meta)
+
+  * Fix re-entrant bug that may cause failure if multiple calls made to
+    functions in astro_class.cpp
+
+  * Fix bug in several files to more correctly account for row ordering
+    differences between C++ and FITS images (via CFITSIO)
+
+  * Fix bug in p2dfft, pa.py, and fit.py where sometimes the incorrect PA
+    sign was returned
+
+  [KNOWN ISSUES]
+
+  * Plotting applications will get a single invalid style error on some 
+    distributions.  This is a Qt error and does not affect operation.
+
+  * boost.py -s option will show an extra blank window for each file
+
+  * Several of the Python programs will fail if used on a non-grphical display.
+    To work around this, uncomment the line matplotlib.use('Agg').  If using
+    on a graphical/X-Window environment, comment this line out.
+
+  [OTHER]
+
+  * give_maximum_pitch_phase was removed and it's functions were addedd to
+    a C++ class in pitch_class.*.  The class also adds new funcitonality like
+    SNR and FWHM calculation for the FFT data.
+
+  * Change 2dfft to p2dfft to differentiate the packages
+
+  * Update README.txt file to improve clarity and change references to p2dfft
+
+  * Rename avg.py to pa.py and remove excess code for SNR and FWHM.  Return
+    to weighted average by amplitude for determining PA.
+
+  * Fix error and warning messages in multiple files to be consistent
+
+  * Update and clean up comments in all files
+
+  * Fix Python print statements to be pure Python form (instead of building
+    strings outside of print and the passing those)
+
+  * Remove fits_text_read() and fits_text_write() placeholders from astro_class
+
+  * Change p2dfft version printing to only occur when -v option is specified
+
+  [VERSIONS]
+
+    astro_class.cpp - 3.0/20180610
+    astro_class.h - 2.0/20180526
+    Blank.jpg - <no version>
+    chart_freq.py - 1.0/20180801 <-- New file for this release
+    filter.py - 1.0/20180801 <-- New file for this release
+    fit.py - 1.0/20180816 <-- New file for this release
+    give_maximum_pitch_phase.f <-- File removed for this release
+    globals.h - 1.0/20180601 <-- New file for this release
+    I_Blank.jpg - <no version>
+    ifft.cpp - 2.1/20180205
+    input.txt - N/A
+    logsp.py - 1.0/20180801 <-- New file for this release
+    makefile - 4.7/20181020
+    p2dfft.cpp - 5.4/20180914
+    pa.py - 5.0/20180718 <-- Was avg.py, but name changes this release
+    pitch_class.h - 1.3/20180407 <-- New file for this release
+    pitch_class.cpp - 1.3/20180407 <-- New file for this release
+    README.txt - 5.0/20180920
+    CHANGES - 5.0/20180920
+    sp_input.txt - N/A
+    spiral.c - 4.0/20180610
+    txt2fits.c - 1.3/20170828
+    PA_Notes.odt - 1.1/20180205
+    PA_Notes.pdf - 1.1/20180205
+    zoo.py - 2.1/20181020 <-- New file for this release
+
+
+4.4  30-Jan-2018
+ 
+  [ENHANCEMENTS]
+
+  * Add -w|--warning option to avg.py to suppress the printing of warning
+    messages
+
+  * Add -s|--sweep option to spiral.c to specify how far around the core in
+    polar angle to plot the arms (longer sweep value means a longer arm)
+
+  * Add a luminosity change field to spiral.c in order to generate spirals with
+    linearly decreasing luminosity
+
+  [BUG FIXES]
+
+  * Fix error in CHANGES file regarding the versions of PA_Notes.*
+
+  * Fix bug in makefile where "make install" did not call for a build in the
+    event there was a change in one of the source files.
+
+  * Corrected the interpreter directive (a.k.a. the shebang) for avg.py so that
+    it always calls for Python 3 and not just the default Python version on
+    the system
+
+  [OTHER]
+
+  * This version is now re-based on Ubuntu 16.04 LTS
+
+  * Updated README.txt for new features and clarified the software requirements
+
+  [VERSIONS]
+
+    2dfft.cpp - 4.0/20170828
+    astro_class.cpp - 1.3/20170828
+    astro_class.h - 1.0/20170217
+    avg.py - 2.7/20180117
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.cpp - 2.0/20170828
+    input.txt - N/A
+    makefile - 4.3/20180121
+    README.txt - 4.4/20180130
+    CHANGES - 4.4/20180130
+    sp_input.txt - N/A
+    spiral.c - 2.1/20180121
+    txt2fits.c - 1.3/20170828
+    Blank.jpg - <no version>
+    I_Blank.jpg - <no version>
+    PA_Notes.odt - 1.0/20170828
+    PA_Notes.pdf - 1.0/20170828
+
+
+4.3  04-Jan-2018
+ 
+  [ENHANCEMENTS]
+
+  * Add -g|--grade option to avg.py to calculate the dominant mode by using
+    average amplitude and not just the mode with the highest single amplitude
+    value
+
+  * Changed the test file output of avg.py to print, in a tab separated file,
+    the calculations for preferred mode, all modes (overall), and for each
+    individual mode.
+
+  * Add the following input options to spiral.c
+        -Rotation of spiral (-90 to 90 degrees) for each file
+        -Initial radius (r0) for each file
+        -Specify if the core area should be filled in with a value twice the
+         value of the arm foreground pixel value
+        -Feather value
+        -Default foreground and background pixel values
+        -The change in pitch angle from beginning to end
+        -Outer margin (i.e. the number of pixels at the edge where nothing is
+         plotted)
+
+  * Change spiral.c input scheme to include defaults and not fail, but re-ask if
+   invalid value is given
+
+  * Change spiral.c theta value from a function of size to 360 degrees
+
+  * Make spiral.c ASCII fits file generation optional by specifying a command
+    line flag
+
+  * Add option to spiral.c to list pitch angle by radius
+
+  [BUG FIXES]
+
+  * Remove deprecated -m option from avg.py
+
+  * Remove restriction on file size being odd in spiral.c
+
+  * Fix FITS generation code in spiral.c to use CFITSIO function built-in code
+    to remove existing file
+
+  * Update/correct comments in spiral.c
+
+  [OTHER]
+
+  NONE
+
+  [VERSIONS]
+
+    2dfft.cpp - 4.0/20170828
+    astro_class.cpp - 1.3/20170828
+    astro_class.h - 1.0/20170217
+    avg.py - 2.6/20180103
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.cpp - 2.0/20170828
+    input.txt - N/A
+    makefile - 4.2/20171201
+    README.txt - 4.3/20180104
+    CHANGES - 4.3/20180104
+    sp_input.txt - N/A
+    spiral.c - 2.0/20180104
+    txt2fits.c - 1.3/20170828
+    Blank.jpg - <no version>
+    I_Blank.jpg - <no version>
+    PA_Notes.odt - 1.0/20170828
+    PA_Notes.pdf - 1.0/20170828
+
+
+4.2  05-Dec-2017
+ 
+  [ENHANCEMENTS]
+
+  * Add -a|--arms options to avg.py to force a preferred mode output plot
+
+  * Add a dist option to makefile to build a tar package suitable for
+    distribution
+
+  [BUG FIXES]
+
+  * Version 4.1 had the makefile and CHANGES file missing from the distribution
+
+  [OTHER]
+
+  * Add MIN_MODE and MAX_MODE constants to avg.py
+
+  [VERSIONS]
+
+    2dfft.cpp - 4.0/20170828
+    astro_class.cpp - 1.3/20170828
+    astro_class.h - 1.0/20170217
+    avg.py - 2.5/20171128
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.cpp - 2.0/20170828
+    input.txt - N/A
+    makefile - 4.2/20171201
+    README.txt - 4.2/20171205
+    CHANGES - 4.2/20171205
+    sp_input.txt - N/A
+    spiral.c - 1.4/20170828
+    txt2fits.c - 1.3/20170828
+    Blank.jpg - <no version>
+    I_Blank.jpg - <no version>
+    PA_Notes.odt - 1.0/20170828
+    PA_Notes.pdf - 1.0/20170828
+
+
+4.1  23-Oct-2017
+ 
+  [ENHANCEMENTS]
+
+  * Add mode to display mode 1 for every plot when the -n option is used.  This     is helpful as many hurricanes have one predominant arm.
+
+  [BUG FIXES]
+
+  * Fix bug that caused error/fault when using -n
+
+  * Fix bug where -n did not calculate and display in nautical miles
+
+  * Fix bug is displaying calculation totals when using the -n option
+
+  [OTHER]
+
+  * Remove deprecated comments
+
+  [VERSIONS]
+
+    2dfft.cpp - 4.0/20170828
+    astro_class.cpp - 1.3/20170828
+    astro_class.h - 1.0/20170217
+    avg.py - 2.4/20171023
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.cpp - 2.0/20170828
+    input.txt - N/A
+    makefile - 4.1/20170828
+    README.txt - 4.1/20171023
+    CHANGES - 4.1/20171023
+    sp_input.txt - N/A
+    spiral.c - 1.4/20170828
+    txt2fits.c - 1.3/20170828
+    Blank.jpg - <no version>
+    I_Blank.jpg - <no version>
+    PA_Notes.odt - 1.0/20170828
+    PA_Notes.pdf - 1.0/20170828
+
+
+4.0  28-Aug-2017
+ 
+  [ENHANCEMENTS]
+
+  * Significant changes to 2dfft.cpp to now use the Harvard FFTW3 library for
+    FFT transforms.  This simplifies the code and increase performance.
+
+  * Significant changes to ifft to now use the Harvard FFTW3 library.
+
+  * Changes to the mapping algorithm to improve performance of 2dfft and ifft.
+
+  * Made ifft text output file output optional and add the -t option/
+
+  [BUG FIXES]
+
+  * Fix bug in 2dfft code to read files from an input file where it would find
+    no files to process
+
+  * Update/correct ifft header/comment information
+
+  * Remove ifft -f and -p options as these mappings were not very useful.
+
+  * Fix bug in file close statement in spiral.c
+
+  * Fix bug in minor bug in the library ordering in the makefile which would
+    cause problems compiling on some distributions.
+
+  [OTHER]
+
+  * Add .odt and PDF document to document performance testing and accuracy of
+    various releases
+
+  * Change ifft from C to C++ and make changes to the makefile to support this.
+
+  * Update comments in 2dfft.cpp
+
+  * Make error messages in 2dfft.cpp consistent with other program's output
+
+  * Add more useful debugging statements (DEBUG) to 2dfft.cpp
+
+  * Minor changes in 2dfft.cpp, ifft.cpp, spiral.c, and txt2fits.c to eliminate
+    compiler warnings on some Linux distributions
+
+  [VERSIONS]
+
+    2dfft.cpp - 4.0/20170828
+    astro_class.cpp - 1.3/20170828
+    astro_class.h - 1.0/20170217
+    avg.py - 2.3/20170809
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.cpp - 2.0/20170828
+    input.txt - N/A
+    makefile - 4.1/20170828
+    README.txt - 4.0/20170828
+    CHANGES - 4.0/20170828
+    sp_input.txt - N/A
+    spiral.c - 1.4/20170828
+    txt2fits.c - 1.3/20170828
+    Blank.jpg - <no version>
+    I_Blank.jpg - <no version>
+    PA_Notes.odt - 1.0/20170828 <-- New file for this release
+    PA_Notes.pdf - 1.0/20170828 <-- New file for this release
+
+
+3.5  29-Jul-2017
+ 
+  [ENHANCEMENTS]
+
+  * avg.py: Add -z option to zero out non-confirming values.  If this is not
+    set, don't zero them out, but still ignore them in calculations.
+
+  * avg.py: Add vertical line to 0 in frequency plot
+
+  * avg.py: Add -d logic for galaxy data file from testing branch
+
+  * avg.py: Update comment format to be consistent
+
+  * avg.py: Update comments and usage information
+
+  * avg.py: Created default X-Axis label constants for using a data file and
+    not using a data file
+
+  * avg.py: Add logic to read BAR and CHIRALITY keywords in FITS file (only if
+    no data file specified)
+
+  * avg.py: Change second plot to have two average plots, one for weighted
+    average of all modes and one for selected arm size (if ARM keyword)
+
+  * avg.py:  Change -j and -r logic/print.  Now it will generate a separate plot
+    with both original and inverse FFT images, if they can be found.  By
+    default, it looks in the current directory or in the directory specified in
+    -j or -r.  If not found, a placeholder will be displayed and a warning
+    displayed.
+
+  * avg.py: Update calculation logic to be much clearer
+
+  * avg.py: Rewrite frequency plot code to take data directly from a specified
+    radius
+
+  * avg.py: Add Mean PA and Std Dev labels to Figure 2 plots
+
+  * avg.py: Add new -o|--output option for result file name
+
+  * Add the ability to specify .fits filename to ifft and avg.py, which will
+    strip the extension and process them
+
+  * Add feature where ifft will add a mode # to the filename if -m option is
+    specified
+
+  * Add output field for mode # (7 for all and the preferred mode # for the
+    Arms field)
+
+  [BUG FIXES]
+
+  * ifft: Fix bug where mode 1 was not set as a default
+
+  * ifft: Correct bug where results matrix not initialized
+
+  * ifft: Add filter to prevent NAN values from IFFT from being mapped as they
+    display improperly
+
+  * avg.py: Fix bug in standard deviation calculation
+
+  * avg.py: Fix bug in chirality command line option code
+
+  * avg.py: Fix bug in frequency and phase plot where mode 7 was being called
+
+  * avg.py: Fix bug in Figure 2 plot title
+
+  * avg.py: Fix titles on all plots to be more consistent
+
+  * avg.py: Fix error with bar size in average plot
+
+  * avg.py: Update warning/error messages to have a consistent format
+
+  * avg.py: Fix vertical bar line on all plots and add line for to demarcate 
+    excluded values at end
+
+  * avg.py: Use a standard horizontal spacing in all plots for legend
+
+  * avg.py: Fix radius logic so the radius array always has integer values
+    corresponding to pixels and the print_radius[] array has the values in
+    pixels or arseconds (which are not always integers)
+
+  * avg.py: Fix bug where program will fail if no X Display is defined.
+
+  * avg.py: Fix bug in -c logic in selecting points
+
+  [OTHER]
+
+  * avg.py: Remove -a|--axis and -v|--verbose option code
+
+  * avg.py: Remove -n|--name mandatory option code
+
+  * avg.py: Move plot close commands after PDF write
+
+  * avg.py: Removed code to calculate frequency steps used in p2dfft, instead
+    make it a constant
+
+  * avg.py: Remove unused logic and variables max_phase and max_pa
+
+  * avg.py: Removed Result_Long file and just have one Result file output
+
+  * avg.py: Change input from a directory to a file list
+
+  * avg.py: Change output so all plots are written to a single multi-page PDF
+    file instead of multiple PDF's
+
+  * ifft: Add status messages to non-verbose mode
+
+
+  [VERSIONS]
+
+    2dfft.cpp - 3.3/20170609
+    astro_class.cpp - 1.2/20170607
+    astro_class.h - 1.0/20170217
+    avg.py - 2.2/20170728
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.c - 1.6/20170728
+    input.txt - N/A
+    makefile - 4.0/20170723
+    README.txt - 3.5/20170729
+    CHANGES - 3.5/20170729
+    sp_input.txt - N/A
+    spiral.c - 1.3/20170118
+    txt2fits.c - 1.2/20170219
+    Blank.jpg - <no version> <-- New file for this release
+    I_Blank.jpg - <no version> <-- New file for this release
+
+
+3.3  09-Jun-2017
+ 
+  [CRITICAL]
+
+  * Fixed error in mapping of text files by not including the two dimension
+    bytes which are in the first two entries.  This also means that ALL text
+    files need to have two leading bytes for the dimensions.  These can be set
+    to zero and the size will be calculated, but these bytes need to be added
+    to wtextimage output files.
+
+  [ENHANCEMENTS]
+
+  * Make the changes to the makefile to support multi-threading/re-entrant mode
+    for the cfitsio libraries.  Also document that this mode is now highly 
+    recommended for all users.
+
+  * Made a change to 2dfft to print out the version number when it starts.
+
+  [BUG FIXES]
+
+  * Fix incorrect error messages in 2dfft.cpp
+
+  * Remove deprecated -f/--force_read code
+
+  * Correct help printout error in 2dfft.cpp
+
+  [OTHER]
+
+  * Update comments in 2dfft.cpp
+
+  * Make test code a separate package with separate release numbers.  Remove
+    references to test code in files.
+
+  [VERSIONS]
+
+    2dfft.cpp - 3.3/20170609
+    astro_class.cpp - 1.2/20170607
+    astro_class.h - 1.0/20170217
+    avg.py - 1.6/20170607
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.c - 1.5/20170118
+    input.txt - N/A
+    makefile - 3.9/20170609
+    README.txt - 3.3/20170609
+    sp_input.txt - N/A
+    spiral.c - 1.3/20170118
+    txt2fits.c - 1.2/20170219
+
+
+3.2  07-Jun-2017
+ 
+  [CRITICAL]
+
+  * Removed -std=c++11 compiler flag as this caused some Linux versions with
+    different libraries and compiler versions to return erroneous results (with
+    no warning).  This also required changes in astro_class.cpp to remove c++11
+    code and replace with more standard C++ syntax.
+
+  [ENHANCEMENTS]
+
+  * Change Readme.txt to README.txt and update the file for current features
+    in this release and to improve readability.
+
+  [BUG FIXES]
+
+  * Fix bug in avg.py in figure 2 (Weighted Average Pitch Angle Plot) where 
+    radius was not printing correctly.
+
+  * Remove redefinition of BIN_DIR in astro_class.cpp since it is passed in
+    on the command line via the makefile.
+
+  [OTHER]
+
+  * Remove test package details from CHANGES and Readme.txt/README.txt and
+    make that a completely separate package
+
+  [VERSIONS]
+
+    2dfft.cpp - 3.2/20170607
+    astro_class.cpp - 1.2/20170607
+    astro_class.h - 1.0/20170217
+    avg.py - 1.6/20170607
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.c - 1.5/20170118
+    input.txt - N/A
+    makefile - 3.8/20170607
+    README.txt - 3.2/20170607
+    sp_input.txt - N/A
+    spiral.c - 1.3/20170118
+    txt2fits.c - 1.2/20170219
+
+
+3.1  21-Feb-2017
+ 
+  [ENHANCEMENTS]
+
+  * Fix the error messages in astro_class.cpp so that they all print out the
+    error message text along with the code.  Previously, only some error 
+    messages printed the text.
+
+  * Changed the wording in Readme.txt to add some clarity to the 2dfft command
+    line options.
+
+  [BUG FIXES]
+
+  * Changed the default build options in the makefile from debug (-g) to
+    optimize (-O) for best performance.
+
+  * Change fitsio.h include from local ("") to global (<>).
+
+  * Fix missing compilation variable (BIN_DIR) pass to C++ files.
+
+  [OTHER]
+
+  * Remove unused variables in 2dfft.cpp and astro_class.cpp
+
+  [VERSIONS]
+
+    2dfft.cpp - 3.1/20170221
+    astro_class.cpp - 1.1/20170221
+    astro_class.h - 1.0/20170217
+    avg.py - 1.5/20170118
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.c - 1.5/20170118
+    input.txt - N/A
+    makefile - 3.7/20170221
+    Readme.txt - 3.1/20170221
+    sp_input.txt - N/A
+    spiral.c - 1.3/20170118
+    TEST/run.test - 2.0/20170219
+    txt2fits.c - 1.2/20170219
+
+
+3.0  20-Feb-2017
+ 
+  [ENHANCEMENTS]
+
+  * Rewrite front end portion of 2dfft.  Scripter is now no longer required and
+    arguments can be provided to 2dfft via the command line, and input file
+    (-i option) or standard input.  2dfft should still work with scripter 
+    generated files as long as they were built with the scripter version using
+    the -PARALLEL option.
+
+  * Eliminate the compile time options.  2dfft behavior is now controlled by
+    command line options.
+
+  * Added support to process binary FITS files (so no need to convert images
+    to ASCII).
+
+  * The result file name and radius are now optional.  If they are not provided
+    in the input file, they will be calculated by 2dfft.
+
+  * Update some programs to use the astro class for getting fits data and
+    allocating memory.
+
+  [BUG FIXES]
+
+  * Fixed bug in txt2fits.c where any file greater than 835 x 835 pixels would
+    not be processed properly.
+
+  * Fixed some bugs in the corresponding test package where the *.dat and *.rip
+    files were not compared properly.
+
+  [OTHER]
+
+  * Added the test script information into this CHANGES file, but the package
+    is still distributed separately due to it's size.
+
+  * Update the test scripts for the new behavior of 2dfft.
+
+  [VERSIONS]
+
+    2dfft.cpp - 3.0/20170220 <-- Note: Converted from .c to .cpp
+    astro_class.cpp - 1.0/20170219 <-- New file for this release
+    astro_class.h - 1.0/20170217 <-- New file for this release
+    avg.py - 1.5/20170118
+    FileClass.cpp - 1.0/20161214 <-- This is now deprecated
+    FileClass.h - 1.0/20161214 <-- This is now deprecated
+    FileParse.cpp - 1.0/20161214 <-- This is now deprecated
+    FileParse.h - 1.0/20161214 <-- This is now deprecated
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.c - 1.5/20170118
+    input.txt - N/A
+    makefile - 3.6/20170208
+    Readme.txt - 3.0/20170220
+    scripter.cpp - 2.4/20161206 <-- This is now deprecated
+    sp_input.txt - N/A
+    spiral.c - 1.3/20170118
+    TEST/run.test - 2.0/20170219 <-- New for CHANGES file this release
+    txt2fits.c - 1.2/20170219
+
+
+2.6  18-Jan-2017
+ 
+  [ENHANCEMENTS]
+ 
+  * Added FFT frequency mapping and phase angle data output to ifft.c -f
+    and -p options).
+
+  * Add the -a option to avg.py so the X-Axis labels can be changed to the
+    text specified in the -a command line option.
+
+  * Add titles to the images on the second plot subplots and adjust the spacing
+    of the subplots in avy.py to make them easier to read.
+
+  * Improve error handling in avg.py
+        - For when inverse FFT images not found.  Warning instead of exit. 
+        - For when original jpg image not found.  Warning instead of exit. 
+        - For when phase test data file not found.  Warning instead of exit. 
+        - For when frequency test data file not found.  Warning instead of exit
+
+  * Add options in spiral.c to adjust signal to noise in the generated images.
+
+  [BUG FIXES]
+
+  * Removed mode 0 from the default modes used in ifft.c 
+
+  * Removed mode 0 from the plots in avg.py
+
+  * Fixed bug in mode selection for ifft.  Also made bounds checking for modes
+    against the constants for highest and lowest mode.
+
+  * Fixed bug in CFLAGS handling in the makefile
+
+  * Fixed bug in avg.py where using -m would cause arrays to be defined
+    incorrectly.
+
+  * Fixed print statements in avg.py so it runs under Python 2.x or 3.x
+
+  * Fixed problem in avg.py subplot layouts using gridspec
+
+  * Fixed errors/omissions avg.py option help text/comments
+
+  * Fixed errors in spiral help text
+ 
+  [OTHER]
+
+  * Changed delimiter in spiral input file from a tab to a comma
+
+  [VERSIONS]
+
+    2dfft.c - 2.5/20160103
+    avg.py - 1.5/20170118
+    FileClass.cpp - 1.0/20161214
+    FileClass.h - 1.0/20161214
+    FileParse.cpp - 1.0/20161214
+    FileParse.h - 1.0/20161214
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.c - 1.5/20170118
+    input.txt - N/A
+    makefile - 3.5/20170105
+    Readme.txt - 2.51/20170103
+    scripter.cpp - 2.4/20161206
+    sp_input.txt - N/A
+    spiral.c - 1.3/20170118
+    txt2fits.c - 1.1/20161206
+
+
+2.51 03-Jan-2017
+ 
+  [ENHANCEMENTS]
+ 
+  * Added v1.3 of avg.py to analyze results from *_m[0-6] 2dfft output files.
+
+  * Check for existence of files in the scripter.cpp program before writing 
+    them to the output file.
+
+  * Updated help output from ifft program.
+
+  * Added I_ prefix to ifft output files.  This allows them to be run in the
+    same directory as the image files and not overwrite them.
+
+  [BUG FIXES]
+
+  * Fixed bug in makefile order which would cause it to fail the first time
+    make was run to build ifft.
+
+  * Fixed bug in spiral which caused chirality (arm spin direction) to be 
+    reversed.
+
+  * Change incorrect permissions on avg.py so it is executable.
+
+  * Fix defined size of NLine to match larger size in FileClass.cpp
+
+  * Added a check in 2dfft.c to avoid it looping forever if an input file is
+    not found.
+
+  * Added a check in 2dfft.c to avoid looping forever if the FITS .txt file has
+    a header.
+ 
+  [OTHER]
+
+  * Added VERSIONS into the CHANGES file.
+
+  * Fixed misc. comments in scripter.cpp
+
+  [VERSIONS]
+
+    2dfft.c - 2.5/20160103
+    avg.py - 1.3/20161214
+    FileClass.cpp - 1.0/20161214
+    FileClass.h - 1.0/20161214
+    FileParse.cpp - 1.0/20161214
+    FileParse.h - 1.0/20161214
+    give_maximum_pitch_phase.f - 1.0/20161214
+    ifft.c - 1.2/20170103
+    input.txt - N/A
+    makefile - 3.4/20161214
+    Readme.txt - 2.51/20170103
+    scripter.cpp - 2.4/20161206
+    sp_input.txt - N/A
+    spiral.c - 1.2/20161213
+    txt2fits.c - 1.1/20161206
+
+
+2.5  06-Dec-2016
+ 
+  [ENHANCEMENTS]
+ 
+  * Added version 1.1 of ifft utility, which will take the intermediate data
+    output files from 2ddft and create a mapping of the FFT.
+
+  * Added version 1.0 of spiral, which can be used to generate FITS files
+    (text and binary) containing logarithmic spirals, along with makefile
+    support for compiling the program.
+
+  * Added the txt2fits program to convert FITS .txt files into binary
+    FITS files.
+ 
+  * Added a CHANGES file to allow easier tracking of version changes.
+ 
+  [BUG FIXES]
+
+  * Corrected misspelling in paper reference in Readme.txt
+
+  * Corrected misspelling in comment in scripter.cpp
+
+  [OTHER]
+
+    None
+
+ 
+2.1  27-Nov-2016
+ 
+  [ENHANCEMENTS]
+ 
+  * Modified scripter and 2dfft to search for the executable files in the
+    directories ., BIN_DIR (from makefile), ~/bin, /bin, /usr/bin/, and 
+    /usr/share/bin.  It will use the first version located.
+
+  * Add error checking to scripter.cpp.  It will now check that input file
+    data is in bounds and is consistent (And delimited properly).
+
+  * Modified scripter and 2dfft to use the variable BIN_DIR directly from the 
+    makefile
+
+  * Scripter will now print a comment with the filename in it's output file.
+
+  [BUG FIXES]
+ 
+  * Cleaned up print statements and comments in 2dfft.c
+
+  * Made a change to print an error message if file is skipped by scripter
+
+  * Add shell exec statement to scripter output file
+
+ 
+2.0  27-Sep-2016
+ 
+  [ENHANCEMENTS]
+ 
+  * Change programs to add support for parallel processing of FFT for different
+    radii (PARALLEL compilation flag)
+  
+  * Change programs to add support for saving the intermediate FFT data
+    (SAVE_RIP compilation flag)
+  
+  * Change programs to add support for forcing 2ddft to calculate the size
+    of a FITS image instead of reading the first two bytes (FORCE_READ
+    compilation flag)
+  
+  * Change programs to add support for printing status messages during 
+    processing (STATUS compilation flag)
+  
+  * Added support in the makefile for testing programs (packaged separately)
+  
+  * Added check for blank line at start of scripter input file
+  
+  [BUG FIXES]
+ 
+  * Changed the FORTRAN compiler from fort77 to gfortran
+ 
+  * Fixed command path for executables (this is now deprecated)
+ 
+ 
+1.0     May-2016
+
+  [OTHER]
+
+  * This was the original import of the 2DFFT program from Marc Seigar. The
+    only changes were in the makefile to build in our environment.
+ 
