@@ -1,0 +1,3 @@
+ngc 1566:
+	rotation angle = 119
+	pitch angle = 23.62

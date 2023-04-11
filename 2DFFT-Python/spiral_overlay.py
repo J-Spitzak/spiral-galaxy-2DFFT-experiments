@@ -56,8 +56,6 @@ import numpy as np
 import glob
 from astropy.io import fits
 from matplotlib.colors import LogNorm
-import matplotlib
-matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, RadioButtons
 import sys

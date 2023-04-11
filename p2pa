@@ -337,7 +337,7 @@ for filename in args.files:
 ##
 
     num_lines=0
-    with open(d_prefix+'_m0','r', encoding='windows-1252') as countfile:
+    with open(d_prefix+'_m0','r') as countfile:
         num_lines = sum(1 for line in countfile)
     countfile.close()
 
@@ -442,7 +442,7 @@ for filename in args.files:
 ##
 
             N+=1.0
-            with open(data, encoding='windows-1252') as f:
+            with open(data) as f:
                 f_lines=f.readlines()
 
 ##

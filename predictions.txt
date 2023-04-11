@@ -1,2 +1,0 @@
-rotation = 60
-pitch = 18.23
