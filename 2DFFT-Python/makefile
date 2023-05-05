@@ -135,7 +135,7 @@
 #   This line should a single directory (no comments).
 #
 
-BIN_DIR = ~/codeStuff/2DFFT-Python/bin
+BIN_DIR = ./bin
 
 #
 # Change VERSION if you will be making code changes and want to packge them
@@ -151,7 +151,7 @@ LIBS = -lmagic -lcfitsio -lfftw3 -lcurl -lpthread -lm
 ASTRO = astro_class.cpp astro_class.h
 PITCH = pitch_class.cpp pitch_class.h
 
-all: p2ifft p2dfft p2spiral 
+all: p2ifft p2dfft$(EXEEXT) p2spiral 
 
 opt: p2txt2fits p2map
 
@@ -169,7 +169,7 @@ clean:
 dist:
 	tar czvf ../p2dfft-$(VERSION).tgz README.* CHANGES makefile* *.cpp *.h *.c GNU*  PA_Notes.* input.txt sp_input.txt p2pa p2zoo p2zname p2boost p2logsp p2filter p2chart_freq
 
-p2dfft: p2dfft.cpp $(ASTRO) $(PITCH) globals.h
+p2dfft$(EXEEXT): p2dfft.cpp $(ASTRO) $(PITCH) globals.h
 	g++ $(CCFLAGS) -o p2dfft p2dfft.cpp astro_class.cpp pitch_class.cpp $(LIBS) -fopenmp
 	rm -f *.o
 
