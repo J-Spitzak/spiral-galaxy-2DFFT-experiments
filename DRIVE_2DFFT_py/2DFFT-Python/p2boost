@@ -1,0 +1,457 @@
+#!/usr/bin/env python3
+
+##
+## P2BOOST - Process FITS images to increase contrast <EXPERIMENTAL>
+##
+## This program will remove outlier pixel values in a FITS image and then apply
+##   a bilateral filter to the image.  After conversion to an 8-bit range, a
+##   local contrast enhancement algorithm is applied.
+##
+## PLEASE NOTE: This program is still experimental and not part of the tested
+##   or published data flows.  Use with care.
+##
+##
+## Version 2.2  16-Feb-2019
+##
+##
+## Authors:  Ian Hewitt & Dr. Patrick Treuthardt,
+##           NC Museum of Natural Sciences,
+##           Astronomy & Astrophysics Lab,
+##           Raleigh, NC USA.
+##           http://github.com/treuthardt/P2DFFT
+##
+##
+## LICENSE
+##
+## P2DFFT Spiral Galaxy Arm Pitch Angle Analysis Suite
+## Copyright (c) 2016-2019  Ian B. Hewitt & Dr. Patrick Treuthardt
+##
+## The program is free software:  you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by the Free
+## Software Foundation, version 3.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+## details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program.  If not, see < https://www.gnu.org/licenses >.
+##
+## The authors can be contacted at:
+##
+##      North Carolina Museum of Natural Sciences
+##      Astronomy & Astrophysics Laboratory
+##      11 West Jones Street
+##      Raleigh, NC, 27601  USA
+##      +1.919.707.9800
+##
+##      -- or --
+##
+##      patrick.treuthardt@naturalsciences.org
+##
+##
+## Usage: p2boost [-v|--verbose] [-p|--plot] [-s|--show] [-i|--interim]
+##        <file> [<file>...]
+##
+##   You must specify at least one argument.
+##
+##   <files>         (Required) The name of files to be processed.  Can be
+##                   multiple/wildcard values.
+##   -i|--interim    Generate FITS files at each interim step.  This is 
+##                   useful if you want to adjust the filtering parameters
+##   -v|--verbose    Print status messages at each of the process
+##   -s|--show       Show a window with histogram information for each file
+##   -p|--plot       Create a PDF file with plots of the histograms
+##
+##
+##  Revision History:
+##         V2.2 - 16-Feb-2019 - Minor updates to comments
+##                            - Fix version bug
+##                            - Remove deprecated libraries
+##         V2.1 - 18-Dec-2018 - Minor updates to comments
+##                            - Fix bug in version number
+##         V2.0 - 02-Sep-2018 - Rewrite to use OpenCV routines
+##         V1.0 - 01-Jun-2018 - Initial version
+##
+##
+##  Requirements/Environment:
+##
+##     Python 3.x
+##     numpy (tested using pyhton3-numpy)
+##     astropy.io (tested using python3-astropy)
+##     matplotlib (tested using python3-matplotlib)
+##     OpenCV2 Python libraries (tested with pip3 install opencv-python)
+##
+##
+##  References:
+##
+##      Davis, Benjamin L., Berrier, Joel C., Shields, Douglas W., Kennefick,
+##          Julia, Kennefick, Daniel, Seigar, Marc S., Lacy, Claud H.S., &
+##          Puerari, Ivanio, 2012, ApJS, 199, 33
+##
+
+##
+## CONSTANTS
+##
+
+VERSION='2.2/20190216'
+
+import  os
+import  sys
+import  math
+import  argparse
+import  matplotlib
+import  cv2
+
+from    matplotlib import gridspec
+from    matplotlib.backends.backend_pdf import PdfPages
+
+##
+## Import NUMPY and FITS Libraries
+##
+
+import  numpy as np
+from    astropy.io import fits
+
+##
+## If you will be using the program without a valid X-server environment, please
+##   uncomment the following line
+##
+
+##matplotlib.use('Agg')
+
+
+##
+## MAIN() CODE BLOCK
+##
+
+
+##
+## Get Command Line Arguments
+##
+
+options = argparse.ArgumentParser(description="This Utility Will Boost the Contrast of a FITS Image")
+options.add_argument('files',help='List of FITS Files', nargs='+')
+options.add_argument('-i','--interim',help='Create FITS Images at Each Step - Optional',action="store_true",default=False)    
+options.add_argument('-v','--verbose',help='Print Status Messages During Processing - Optional',action="store_true",default=False)    
+options.add_argument('-s','--show',help='Show a Histogram Window for Each Set of Files - Optional',action="store_true",default=False)    
+options.add_argument('-p','--plot',help='Create a Histogram Plot in PDF for Each Set of Files - Optional',action="store_true",default=False)    
+args=options.parse_args()
+
+if args.verbose:
+    print('p2boost: ',VERSION)
+
+##
+## Loop for all arguments
+##
+
+num=0
+err=0
+
+for item in args.files:
+    num+=1
+
+##
+## Check to see if file exists, since the FITS routines do not handle errors
+##   gracefully
+##
+
+    if not os.path.isfile(item):
+        print("WARNING:  File "+item+" Not Found...Skipping")
+        continue
+
+    arg_path=os.path.abspath(item)
+    arg_file=os.path.basename(item)
+    arg_pair=os.path.splitext(arg_file)
+    if (arg_pair[1] == '.fits') or (arg_pair[1] == '.fts'):
+        arg_file=arg_pair[0]
+
+##
+## Open FITS file and get dimensions
+##
+
+    print('Processing Item -- ',item)
+    file=fits.open(item)
+
+    y=file[0].header['NAXIS1']
+    x=file[0].header['NAXIS2']
+
+##
+## Create a an empty pixel array.  This array will hold all the unique pixel
+##   values present in the image.
+##
+
+    pix=np.zeros([x,y],dtype=np.float32)
+
+##
+## Load pix[] will all the values present in the image for processing
+##
+
+    for i in range(0,x):
+        for j in range(0,y):
+            pix[i][j]=file[0].data[i][j]
+
+    if args.verbose:
+        print('Initial Pix Min: ',np.min(pix),' Max: ', np.max(pix))
+
+##
+## Drop uppermost and lowermost 5% of pixel values.
+##
+
+    hi=np.percentile(pix,95)
+    lo=np.percentile(pix,5)
+
+    for i in range(0,x):
+        for j in range(0,y):
+            if pix[i][j] > hi:
+                pix[i][j]=hi
+            if pix[i][j] < lo:
+                pix[i][j]=lo
+
+##
+## Write FITS output file
+##
+
+    if args.interim:
+        for i in range(0,x):
+            for j in range(0,y):
+                file[0].data[i][j]=pix[i][j]
+        str='rm -f '+'B1_'+item
+        os.system(str)
+        outfile='B1_'+item
+        file.writeto(outfile)
+
+##
+## Measure the center brightness
+##   use that as the new high cutoff value.
+##
+
+    hi=pix[int(x/2)][int(y/2)]
+    for i in range(0,x):
+        for j in range(0,y):
+            if pix[i][j] > hi:
+                pix[i][j]=hi
+
+    if args.verbose:
+        print('Trimmed Pix Min: ',np.min(pix),' Max: ', np.max(pix))
+
+##
+## Write FITS output file
+##
+
+    if args.interim:
+        for i in range(0,x):
+            for j in range(0,y):
+                file[0].data[i][j]=pix[i][j]
+        str='rm -f '+'B2_'+item
+        os.system(str)
+        outfile='B2_'+item
+        file.writeto(outfile)
+
+##
+## Redistribute the brightness values over an 8 bit range
+##
+
+    hi=np.max(pix)
+    lo=np.min(pix)
+    mino = 0.0
+    maxo = 255.0
+    scalepix=pix
+
+    for i in range(0,x):
+        for j in range(0,y):
+            scalepix[i][j]=(pix[i][j]-lo)*(((maxo-mino)/(hi-lo))+mino)
+
+    if args.verbose:
+        print('Scaled Pix Min: ',np.min(scalepix),' Max: ', np.max(scalepix))
+
+##
+## Write FITS output file
+##
+
+    if args.interim:
+        for i in range(0,x):
+            for j in range(0,y):
+                file[0].data[i][j]=scalepix[i][j]
+        str='rm -f '+'B3_'+item
+        os.system(str)
+        outfile='B3_'+item
+        file.writeto(outfile)
+
+##
+## Get the histogram for the original image
+##
+
+    hist_orig,bin_edges_orig=np.histogram(pix,bins=200)
+    bin_centers_orig=0.5*(bin_edges_orig[:-1] + bin_edges_orig[1:])
+
+##
+## Create a PDF file for all the plot pages
+##
+
+    if args.plot or args.show:
+        if args.plot:
+            pp=PdfPages(item+'_histogram.pdf')
+
+##
+## Configure Figure 1 for the raw amplitude and pitch angles vs radius.
+##
+
+        f1=pl.figure(item+' Histograms')
+
+##
+## Configure first subplot for raw histogram
+##
+
+        pl.subplot2grid((2,2),(0,0), colspan=2)
+        pl.title('Raw Histogram:  '+item)
+        pl.xlabel('Value')
+        pl.ylabel('Num of Pts')
+        pl.plot(bin_centers_orig,hist_orig,lw=2)
+
+        pl.axvline(x=np.median(pix),color='k',lw=1.5)
+        pl.axvline(x=np.mean(pix),color='g',lw=1.5)
+
+        if args.show:
+            pl.show()
+
+##
+## Apply a Bilateral filter to the image
+##
+
+    newpix=cv2.bilateralFilter(scalepix,9,75,75)
+
+    if args.verbose:
+        print('BL Filtered Pix Min: ',np.min(newpix),' Max: ', np.max(newpix))
+
+##
+## Get the histogram for the bilateral filter image
+##
+
+    hist_bilat,bin_edges_bilat=np.histogram(newpix,bins=200)
+    bin_centers_bilat=0.5*(bin_edges_bilat[:-1] + bin_edges_bilat[1:])
+
+##
+## Write FITS output file
+##
+
+    if args.interim:
+        for i in range(0,x):
+            for j in range(0,y):
+                file[0].data[i][j]=newpix[i][j]
+        str='rm -f '+'B4_'+item
+        os.system(str)
+        outfile='B4_'+item
+        file.writeto(outfile)
+
+##
+## Configure second subplot for Bilateral filter histogram
+##
+
+    if args.show or args.plot:
+        pl.subplot2grid((2,2),(1,0), colspan=2)
+        pl.title('Bilateral Filter Histogram:  '+item)
+        pl.xlabel('Value')
+        pl.ylabel('Num of Pts')
+        pl.plot(bin_centers_bilat,hist_bilat,lw=2)
+
+        pl.axvline(x=np.median(newpix),color='k',lw=1.5)
+        pl.axvline(x=np.mean(newpix),color='g',lw=1.5)
+
+        pl.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+
+        if args.show:
+            pl.show()
+
+##
+## By default, the layout pushes everything together.  Give it some space.
+##
+
+        pl.close(f1)
+
+##
+## Now we can write the plot to a PDF file.
+##
+
+        if args.plot:
+            f1.savefig(pp, format='pdf')
+
+##
+## Neutralize background value to remove ambient noise
+##
+
+    bgval=np.min(newpix)
+    if bgval > 0.0:
+        for i in range(0,x):
+            for j in range(0,y):
+                newpix[i][j]=newpix[i][j]-bgval
+    else:
+        for i in range(0,x):
+            for j in range(0,y):
+                if newpix[i][j] < 0.0:
+                    newpix[i][j]=0.0
+        
+##
+## Local Contrast Enhancement.  Need to change numpy type since the routines
+##   cannot process float arrays.
+##
+
+    intdata=newpix.astype(np.uint8)
+    clahe=cv2.createCLAHE(clipLimit=2.0, tileGridSize=(5,5))
+    lce=clahe.apply(intdata)
+
+##
+## Get the histogram for the LCE image
+##
+
+    hist_lce,bin_edges_lce=np.histogram(lce,bins=200)
+    bin_centers_lce=0.5*(bin_edges_lce[:-1] + bin_edges_lce[1:])
+
+##
+## Write FITS output file
+##
+
+    for i in range(0,x):
+        for j in range(0,y):
+            file[0].data[i][j]=lce[i][j]
+    str='rm -f '+'C_'+item
+    os.system(str)
+    outfile='C_'+item
+    file.writeto(outfile)
+
+##
+## Configure Figure 2
+##
+
+    if args.show or args.plot:
+        f2=pl.figure(item+' Histograms 2')
+
+##
+## Configure subplot for local contrast enhancement histogram
+##
+
+        pl.subplot2grid((2,2),(0,0), colspan=2)
+        pl.title('Local Contrast Histogram:  '+item)
+        pl.xlabel('Value')
+        pl.ylabel('Num of Pts')
+        pl.plot(bin_centers_lce,hist_lce,lw=2)
+
+        pl.axvline(x=np.median(lce),color='k',lw=1.5)
+        pl.axvline(x=np.mean(lce),color='g',lw=1.5)
+
+        pl.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+
+        if args.show:
+            pl.show()
+
+        if args.plot:
+##
+## Now we can write the plot to a PDF file.
+##
+
+            f1.savefig(pp, format='pdf')
+            pp.close()
+
+        pl.close(f2)
+
