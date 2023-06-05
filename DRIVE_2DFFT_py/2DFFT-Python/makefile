@@ -135,7 +135,7 @@
 #   This line should a single directory (no comments).
 #
 
-BIN_DIR = ~/bin
+BIN_DIR = ./BIN
 
 #
 # Change VERSION if you will be making code changes and want to packge them
@@ -145,13 +145,13 @@ BIN_DIR = ~/bin
 
 VERSION = 5.2.2
 
-CFLAGS = -O -DBIN_DIR='"$(BIN_DIR)"'
-CCFLAGS = -O -DBIN_DIR='"$(BIN_DIR)"' -fopenmp
+CFLAGS = -O -DBIN_DIR='"$(BIN_DIR)"' -g
+CCFLAGS = -O -DBIN_DIR='"$(BIN_DIR)"' -fopenmp -g
 LIBS = -lmagic -lcfitsio -lfftw3 -lcurl -lpthread -lm
 ASTRO = astro_class.cpp astro_class.h
 PITCH = pitch_class.cpp pitch_class.h
 
-all: p2ifft p2dfft p2spiral 
+all: p2ifft p2dfft p2spiral
 
 opt: p2txt2fits p2map
 
@@ -190,4 +190,6 @@ p2map: p2map.cpp astro_class.cpp astro_class.h globals.h
 .cpp: globals.h
 	g++ $(CFLAGS) -o $* $*.cpp $(LIBS)
 	rm -f *.o
-
+stuffThatworks: p2dfft.cpp
+	gcc $(CCFLAGS) -o p2dfft p2dfft.cpp astro_class.cpp pitch_class.cpp $(LIBS) -fopenmp
+	rm -f *.o
