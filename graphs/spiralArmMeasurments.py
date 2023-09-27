@@ -1,12 +1,7 @@
 import csv
-import datetime
 import math
-import sys
 import numpy as np
-from scipy import stats
-from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-import scipy.optimize as optim
 
 rownum = 0
 
