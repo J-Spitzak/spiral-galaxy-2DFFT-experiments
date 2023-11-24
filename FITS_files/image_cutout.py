@@ -6,9 +6,9 @@ from astropy.utils.data import download_file
 from astropy.wcs import WCS
 
 # Download the image
-filename = 'frame-g-002141-2-0115.fits'
-position = (853,791)
-size = 200
+filename = 'exampleFile.fits'
+position = (477,632)
+size = 250
 
 # Load the image and the WCS
 hdu = fits.open(filename)[0]
