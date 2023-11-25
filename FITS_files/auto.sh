@@ -1,24 +1,32 @@
 #!/bin/bash
 
-read -p "input file: " FILE
+read -p "input file: " GALAXY 
 
-cd ./$FILE
+cd ./$GALAXY
 
 ls
 
-read -p "input file: " OTHER
+read -p "input file: " FILE
 
-cp $OTHER $FILE.fits
+ds9 $FILE &
 
-python3 ../spiral_overlay.py $FILE.fits 
+read -p "x: " XPOS
+
+read -p "y: " YPOS 
+
+read -p "scale: " SCALE 
+
+python3 ../image_cutout.py $FILE $XPOS $YPOS $SCALE $GALAXY.fits
+
+python3 ../spiral_overlay.py $GALAXY.fits 
 
 cp ../p2dfft ./
 
-./p2dfft $FILE.fits
+./p2dfft $GALAXY.fits
 
-python3 ../p2pa $FILE.fits
+python3 ../p2pa $GALAXY.fits
 
 more Results.csv
 
-python3 ../spiral_overlay.py $FILE.fits
+python3 ../spiral_overlay.py $GALAXY.fits
 
