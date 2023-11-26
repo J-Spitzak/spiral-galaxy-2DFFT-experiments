@@ -4,11 +4,12 @@ from astropy.io import fits
 from astropy.nddata import Cutout2D
 from astropy.utils.data import download_file
 from astropy.wcs import WCS
+from sys import argv
 
 # Download the image
-filename = 'exampleFile.fits'
-position = (477,632)
-size = 250
+filename = str(argv[1]) 
+position = (float(argv[2]),float(argv[3]))
+size = int(argv[4])
 
 # Load the image and the WCS
 hdu = fits.open(filename)[0]
