@@ -1,12 +1,19 @@
 #!/bin/bash
 
-read -p "input file: " GALAXY 
+read -p "input galaxy: " GALAXY 
 
 cd ./$GALAXY
 
 ls
+echo ""
+echo "your input file should look something like this:"
+echo "fc_184.706682+14.416509_sdss(dr7)_g.fits"
+echo "remember the last letter"
+echo ""
 
 read -p "input file: " FILE
+read -p "last letter: " BAND
+echo ""
 
 ds9 $FILE &
 
